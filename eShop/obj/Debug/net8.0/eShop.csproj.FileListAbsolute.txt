@@ -28,3 +28,4 @@ C:\Users\kacpe\RiderProjects\eShop\eShop\obj\Debug\net8.0\refint\eShop.dll
 C:\Users\kacpe\RiderProjects\eShop\eShop\obj\Debug\net8.0\eShop.pdb
 C:\Users\kacpe\RiderProjects\eShop\eShop\obj\Debug\net8.0\eShop.genruntimeconfig.cache
 C:\Users\kacpe\RiderProjects\eShop\eShop\obj\Debug\net8.0\ref\eShop.dll
+C:\Users\kacpe\RiderProjects\eShop\eShop\obj\Debug\net8.0\eShop.sourcelink.json

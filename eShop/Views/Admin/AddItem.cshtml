@@ -1,0 +1,56 @@
+@{
+ViewBag.Title = "Add Item - Admin Panel";
+Layout = "_Layout";
+}
+
+<div class="container">
+    <h2 class="mt-4 mb-3">Add New Item</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+    }
+
+    <form asp-action="AddItem" method="post" enctype="multipart/form-data">
+        <!-- Item Name -->
+        <div class="mb-3">
+            <label for="Name" class="form-label">Item Name</label>
+            <input type="text" id="Name" name="Name" class="form-control" placeholder="Enter item name" required />
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            <label for="Price" class="form-label">Price ($)</label>
+            <input type="number" id="Price" name="Price" class="form-control" placeholder="Enter item price" step="0.01" required />
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+            <label for="Description" class="form-label">Description</label>
+            <textarea id="Description" name="Description" class="form-control" rows="4" placeholder="Enter item description"></textarea>
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+            <label for="Category" class="form-label">Category</label>
+            <select id="Category" name="Category" class="form-select" required>
+                <option value="" disabled selected>Choose a category</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Books">Books</option>
+                <option value="Home Appliances">Home Appliances</option>
+            </select>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="mb-3">
+            <label for="Image" class="form-label">Item Image</label>
+            <input type="file" id="Image" name="Image" class="form-control" accept="image/*" />
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Add Item</button>
+    </form>
+</div>

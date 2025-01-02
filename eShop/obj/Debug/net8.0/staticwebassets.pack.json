@@ -13,6 +13,14 @@
       "PackagePath": "staticwebassets\\favicon.ico"
     },
     {
+      "Id": "C:\\Users\\kacpe\\RiderProjects\\eShop\\eShop\\wwwroot\\images\\eliskir.PNG",
+      "PackagePath": "staticwebassets\\images\\eliskir.PNG"
+    },
+    {
+      "Id": "C:\\Users\\kacpe\\RiderProjects\\eShop\\eShop\\wwwroot\\images\\roza.jpg",
+      "PackagePath": "staticwebassets\\images\\roza.jpg"
+    },
+    {
       "Id": "C:\\Users\\kacpe\\RiderProjects\\eShop\\eShop\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

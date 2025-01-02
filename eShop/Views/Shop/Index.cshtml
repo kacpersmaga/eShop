@@ -1,0 +1,32 @@
+@model IEnumerable<ShopItem>
+
+<div class="container">
+    <h2 class="mt-4 mb-3">Shop Items</h2>
+
+    @if (!Model.Any())
+    {
+        <p>No items available.</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath" class="card-img-top" alt="@item.Name" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Name</h5>
+                            <p class="card-text">@item.Description</p>
+                            <p class="card-text"><strong>Category:</strong> @item.Category</p>
+                            <p class="card-text"><strong>Price:</strong> $@item.Price</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
