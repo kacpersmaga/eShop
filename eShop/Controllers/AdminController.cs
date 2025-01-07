@@ -1,3 +1,4 @@
+using eShop.Mappers;
 using eShop.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,25 +20,30 @@ public class AdminController : Controller
     
     public IActionResult AddItem()
     {
-        return View();
+        return View(new ShopItemFormModel());
     }
     
     [HttpPost]
-    public IActionResult AddItem(ShopItem item, IFormFile Image)
+    public IActionResult AddItem(ShopItemFormModel item, IFormFile Image)
     {
         if (ModelState.IsValid)
         {
+            string? imagePath = null;
             if (Image != null && Image.Length > 0)
             {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", Image.FileName);
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Image.FileName);
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     Image.CopyTo(stream);
                 }
-                item.ImagePath = "/images/" + Image.FileName;
+                imagePath = "/images/" + fileName;
             }
             
-            _itemService.AddItem(item);
+            var shopItem = ShopItemMapper.MapToShopItem(item, imagePath);
+            
+            _itemService.AddItem(shopItem);
+
             TempData["SuccessMessage"] = $"Item '{item.Name}' added successfully!";
             return RedirectToAction("AddItem");
         }
