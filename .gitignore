@@ -50,3 +50,6 @@ artifacts/
 
 # ASP.NET temporary files
 *.vs/
+
+# Configuration files
+appsettings.Development.json

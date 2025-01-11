@@ -7,10 +7,12 @@ namespace eShop.Controllers;
 public class AdminController : Controller
 {
     private readonly ItemService _itemService;
+    private readonly BlobStorageService _blobStorageService;
 
-    public AdminController(ItemService itemService)
+    public AdminController(ItemService itemService, BlobStorageService blobStorageService)
     {
         _itemService = itemService;
+        _blobStorageService = blobStorageService;
     }
     
     public IActionResult Index()
@@ -24,22 +26,15 @@ public class AdminController : Controller
     }
     
     [HttpPost]
-    public IActionResult AddItem(ShopItemFormModel item, IFormFile Image)
+    public async Task<IActionResult> AddItem(ShopItemFormModel item, IFormFile Image)
     {
         if (ModelState.IsValid)
         {
             string? imagePath = null;
             if (Image != null && Image.Length > 0)
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(Image.FileName);
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    Image.CopyTo(stream);
-                }
-                imagePath = "/images/" + fileName;
+                imagePath = await _blobStorageService.UploadFileAsync(Image);
             }
-            
             var shopItem = ShopItemMapper.MapToShopItem(item, imagePath);
             
             _itemService.AddItem(shopItem);
