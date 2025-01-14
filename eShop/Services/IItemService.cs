@@ -1,3 +1,5 @@
+using eShop.Models;
+
 namespace eShop.Controllers;
 
 public interface IItemService

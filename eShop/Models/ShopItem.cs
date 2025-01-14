@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
+namespace eShop.Models;
 public class ShopItem
 {
     [Key]
