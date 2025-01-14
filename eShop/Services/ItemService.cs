@@ -3,7 +3,7 @@ using eShop.Models;
 
 namespace eShop.Controllers;
 
-public class ItemService
+public class ItemService : IItemService
 {
     private readonly ApplicationDbContext _context;
 

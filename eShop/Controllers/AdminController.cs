@@ -6,10 +6,10 @@ namespace eShop.Controllers;
 
 public class AdminController : Controller
 {
-    private readonly ItemService _itemService;
-    private readonly BlobStorageService _blobStorageService;
+    private readonly IItemService _itemService;
+    private readonly IBlobStorageService _blobStorageService;
 
-    public AdminController(ItemService itemService, BlobStorageService blobStorageService)
+    public AdminController(IItemService itemService, IBlobStorageService blobStorageService)
     {
         _itemService = itemService;
         _blobStorageService = blobStorageService;
@@ -30,19 +30,28 @@ public class AdminController : Controller
     {
         if (ModelState.IsValid)
         {
-            string? imagePath = null;
-            if (Image != null && Image.Length > 0)
+            try
             {
-                imagePath = await _blobStorageService.UploadFileAsync(Image);
+                string? imagePath = null;
+
+                if (Image != null && Image.Length > 0)
+                {
+                    imagePath = await _blobStorageService.UploadFileAsync(Image);
+                }
+
+                var shopItem = ShopItemMapper.MapToShopItem(item, imagePath);
+                
+                _itemService.AddItem(shopItem);
+
+                TempData["SuccessMessage"] = $"Item '{item.Name}' added successfully!";
+                return RedirectToAction("AddItem");
             }
-            var shopItem = ShopItemMapper.MapToShopItem(item, imagePath);
-            
-            _itemService.AddItem(shopItem);
-
-            TempData["SuccessMessage"] = $"Item '{item.Name}' added successfully!";
-            return RedirectToAction("AddItem");
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "An error occurred while uploading the image. Please try again.");
+            }
         }
-
+        
         return View(item);
     }
     

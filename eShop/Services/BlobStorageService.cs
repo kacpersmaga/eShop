@@ -4,7 +4,7 @@ using Azure.Storage.Sas;
 
 namespace eShop.Controllers;
 
-public class BlobStorageService
+public class BlobStorageService : IBlobStorageService
 {
     private readonly string _connectionString;
     private readonly string _containerName;
