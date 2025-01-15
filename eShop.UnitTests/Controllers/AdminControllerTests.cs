@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
 using System.IO;
 using System.Threading.Tasks;
+using eShop.Services;
 using Xunit;
 
 namespace eShop.Tests.Controllers

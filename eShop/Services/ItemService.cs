@@ -1,7 +1,7 @@
 using eShop.Data;
 using eShop.Models;
 
-namespace eShop.Controllers;
+namespace eShop.Services;
 
 public class ItemService : IItemService
 {

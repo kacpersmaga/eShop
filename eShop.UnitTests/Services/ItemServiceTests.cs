@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 using System.Collections.Generic;
 using System.Linq;
+using eShop.Services;
 
 namespace eShop.Tests.Services
 {

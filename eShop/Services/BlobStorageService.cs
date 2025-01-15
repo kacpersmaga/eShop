@@ -1,8 +1,9 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
+using eShop.Services;
 
-namespace eShop.Controllers;
+namespace eShop.Services;
 
 public class BlobStorageService : IBlobStorageService
 {

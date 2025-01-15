@@ -1,5 +1,6 @@
 using eShop.Mappers;
 using eShop.Models;
+using eShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eShop.Controllers;

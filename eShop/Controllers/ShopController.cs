@@ -1,3 +1,4 @@
+using eShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eShop.Controllers;
