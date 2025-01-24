@@ -1,64 +1,60 @@
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using eShop.Services;
 
-namespace eShop.Services;
-
 public class BlobStorageService : IBlobStorageService
 {
-    private readonly string _connectionString;
+    private readonly IBlobStorageServiceWrapper _blobWrapper;
     private readonly string _containerName;
+    private readonly ILogger<BlobStorageService> _logger;
 
-    public BlobStorageService(IConfiguration configuration)
+    public BlobStorageService(IBlobStorageServiceWrapper blobWrapper, IConfiguration configuration, ILogger<BlobStorageService> logger)
     {
-        _connectionString = configuration["AzureBlobStorage:ConnectionString"];
-        _containerName = configuration["AzureBlobStorage:ContainerName"];
+        _blobWrapper = blobWrapper ?? throw new ArgumentNullException(nameof(blobWrapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        
+        if (configuration == null)
+            throw new ArgumentNullException(nameof(configuration));
+        
+        _containerName = configuration["AzureBlobStorage:ContainerName"] ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     public async Task<string> UploadFileAsync(IFormFile file)
     {
-        var blobServiceClient = new BlobServiceClient(_connectionString);
+        if (file == null)
+        {
+            throw new ArgumentNullException(nameof(file), "File cannot be null.");
+        }
+
+        if (file.Length == 0)
+        {
+            throw new ArgumentException("File cannot be empty.", nameof(file));
+        }
         
-        var containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
-        
-        await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-        
-        var blobName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-        
-        var blobClient = containerClient.GetBlobClient(blobName);
-        
+        var validImageTypes = new[] { "image/jpeg", "image/png", "image/gif" };
+        if (!validImageTypes.Contains(file.ContentType))
+            throw new ArgumentException("Only image files are allowed.", nameof(file));
+
+        var blobName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+
         using (var stream = file.OpenReadStream())
         {
-            await blobClient.UploadAsync(stream, new BlobHttpHeaders { ContentType = file.ContentType });
+            await _blobWrapper.UploadBlobAsync(_containerName, blobName, stream, file.ContentType);
         }
-        
+
+        _logger.LogInformation("File uploaded successfully: {BlobName}", blobName);
         return blobName;
     }
-    
+
     public string GetBlobSasUri(string blobName)
     {
-        var blobServiceClient = new BlobServiceClient(_connectionString);
-        var containerClient = blobServiceClient.GetBlobContainerClient(_containerName);
-        var blobClient = containerClient.GetBlobClient(blobName);
-        
-        if (!blobClient.Exists())
+        if (string.IsNullOrWhiteSpace(blobName))
         {
-            throw new FileNotFoundException("Blob not found in storage.");
+            throw new ArgumentException("Blob name cannot be null or empty.", nameof(blobName));
         }
-        
-        var sasBuilder = new BlobSasBuilder
-        {
-            BlobContainerName = containerClient.Name,
-            BlobName = blobName,
-            Resource = "b",
-            ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
-        };
-        
-        sasBuilder.SetPermissions(BlobSasPermissions.Read);
-        
-        return blobClient.GenerateSasUri(sasBuilder).ToString();
+
+        var sasUri = _blobWrapper.GenerateBlobSasUri(_containerName, blobName, BlobSasPermissions.Read, TimeSpan.FromHours(1));
+
+        _logger.LogInformation("Generated SAS URI for blob: {BlobName}", blobName);
+        return sasUri;
     }
-    
-    
 }

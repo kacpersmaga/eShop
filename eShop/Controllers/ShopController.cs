@@ -5,18 +5,18 @@ namespace eShop.Controllers;
 
 public class ShopController : Controller
 {
-    private readonly ItemService _itemService;
-    private readonly BlobStorageService _blobStorageService;
+    private readonly IItemService _itemService;
+    private readonly IBlobStorageService _blobStorageService;
 
-    public ShopController(ItemService itemService, BlobStorageService blobStorageService)
+    public ShopController(IItemService itemService, IBlobStorageService blobStorageService)
     {
-        _itemService = itemService;
-        _blobStorageService = blobStorageService;
+        _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
+        _blobStorageService = blobStorageService ?? throw new ArgumentNullException(nameof(blobStorageService));
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var items = _itemService.GetAllItems();
+        var items = await _itemService.GetAllItems();
         
         foreach (var item in items)
         {

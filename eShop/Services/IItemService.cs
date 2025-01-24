@@ -4,6 +4,6 @@ namespace eShop.Services;
 
 public interface IItemService
 {
-    IEnumerable<ShopItem> GetAllItems();
-    void AddItem(ShopItem item);
+    Task<IEnumerable<ShopItem>> GetAllItems();
+    Task AddItem(ShopItem item);
 }

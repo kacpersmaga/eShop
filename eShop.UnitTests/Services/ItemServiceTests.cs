@@ -1,15 +1,15 @@
-using eShop.Controllers;
 using eShop.Data;
 using eShop.Models;
+using eShop.Services;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 using System.Collections.Generic;
 using System.Linq;
-using eShop.Services;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace eShop.Tests.Services
 {
-    public class ItemServiceTests : IDisposable
+    public class ItemServiceTests : IAsyncLifetime
     {
         private readonly ApplicationDbContext _context;
         private readonly ItemService _itemService;
@@ -25,7 +25,7 @@ namespace eShop.Tests.Services
         }
 
         [Fact]
-        public void GetAllItems_ShouldReturnAllItems()
+        public async Task GetAllItems_ShouldReturnAllItems()
         {
             // Arrange
             var items = new List<ShopItem>
@@ -34,11 +34,11 @@ namespace eShop.Tests.Services
                 new ShopItem { Id = 2, Name = "Item2", Price = 20, Category = "Category2" }
             };
 
-            _context.ShopItems.AddRange(items);
-            _context.SaveChanges();
+            await _context.ShopItems.AddRangeAsync(items);
+            await _context.SaveChangesAsync();
 
             // Act
-            var result = _itemService.GetAllItems();
+            var result = await _itemService.GetAllItems();
 
             // Assert
             Assert.Equal(2, result.Count());
@@ -47,17 +47,17 @@ namespace eShop.Tests.Services
         }
 
         [Fact]
-        public void GetAllItems_ShouldReturnEmpty_WhenNoItemsExist()
+        public async Task GetAllItems_ShouldReturnEmpty_WhenNoItemsExist()
         {
             // Act
-            var result = _itemService.GetAllItems();
+            var result = await _itemService.GetAllItems();
 
             // Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public void AddItem_ShouldAddNewItem()
+        public async Task AddItem_ShouldAddNewItem()
         {
             // Arrange
             var newItem = new ShopItem
@@ -68,10 +68,10 @@ namespace eShop.Tests.Services
             };
 
             // Act
-            _itemService.AddItem(newItem);
+            await _itemService.AddItem(newItem);
 
             // Assert
-            var itemInDb = _context.ShopItems.FirstOrDefault(i => i.Name == "NewItem");
+            var itemInDb = await _context.ShopItems.FirstOrDefaultAsync(i => i.Name == "NewItem");
             Assert.NotNull(itemInDb);
             Assert.Equal("NewItem", itemInDb.Name);
             Assert.Equal(15, itemInDb.Price);
@@ -79,7 +79,7 @@ namespace eShop.Tests.Services
         }
 
         [Fact]
-        public void AddItem_ShouldThrowException_WhenInvalidData()
+        public async Task AddItem_ShouldThrowException_WhenInvalidData()
         {
             // Arrange
             var invalidItem = new ShopItem
@@ -90,11 +90,11 @@ namespace eShop.Tests.Services
             };
 
             // Act & Assert
-            Assert.Throws<DbUpdateException>(() => _itemService.AddItem(invalidItem));
+            await Assert.ThrowsAsync<DbUpdateException>(async () => await _itemService.AddItem(invalidItem));
         }
 
         [Fact]
-        public void AddItem_ShouldPersistItemInDatabase()
+        public async Task AddItem_ShouldPersistItemInDatabase()
         {
             // Arrange
             var newItem = new ShopItem
@@ -105,11 +105,11 @@ namespace eShop.Tests.Services
             };
 
             // Act
-            _itemService.AddItem(newItem);
+            await _itemService.AddItem(newItem);
 
             // Detach from context and reload to simulate fresh retrieval
             _context.Entry(newItem).State = EntityState.Detached;
-            var itemInDb = _context.ShopItems.FirstOrDefault(i => i.Name == "PersistentItem");
+            var itemInDb = await _context.ShopItems.FirstOrDefaultAsync(i => i.Name == "PersistentItem");
 
             // Assert
             Assert.NotNull(itemInDb);
@@ -119,7 +119,7 @@ namespace eShop.Tests.Services
         }
 
         [Fact]
-        public void GetAllItems_ShouldIncludeNewlyAddedItems()
+        public async Task GetAllItems_ShouldIncludeNewlyAddedItems()
         {
             // Arrange
             var newItem = new ShopItem
@@ -129,19 +129,24 @@ namespace eShop.Tests.Services
                 Category = "Category5"
             };
 
-            _itemService.AddItem(newItem);
+            await _itemService.AddItem(newItem);
 
             // Act
-            var result = _itemService.GetAllItems();
+            var result = await _itemService.GetAllItems();
 
             // Assert
             Assert.Contains(result, i => i.Name == "NewlyAdded");
         }
 
-        public void Dispose()
+        public async Task InitializeAsync()
         {
-            _context.Database.EnsureDeleted();
-            _context.Dispose();
+            await Task.CompletedTask;
+        }
+
+        public async Task DisposeAsync()
+        {
+            await _context.Database.EnsureDeletedAsync();
+            await _context.DisposeAsync();
         }
     }
 }

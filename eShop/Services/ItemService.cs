@@ -1,5 +1,6 @@
 using eShop.Data;
 using eShop.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace eShop.Services;
 
@@ -12,14 +13,14 @@ public class ItemService : IItemService
         _context = context;
     }
 
-    public IEnumerable<ShopItem> GetAllItems()
+    public async Task<IEnumerable<ShopItem>> GetAllItems()
     {
-        return _context.ShopItems.ToList();
+        return await _context.ShopItems.AsNoTracking().ToListAsync();
     }
 
-    public void AddItem(ShopItem item)
+    public async Task AddItem(ShopItem item)
     {
-        _context.ShopItems.Add(item);
-        _context.SaveChanges();
+        await _context.ShopItems.AddAsync(item);
+        await _context.SaveChangesAsync();
     }
 }
