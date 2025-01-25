@@ -33,7 +33,6 @@ namespace eShop.Controllers
 
         public IActionResult AddItem()
         {
-            // Return a blank form model; Name and Category start as "", Description is null.
             return View(new ShopItemFormModel());
         }
 

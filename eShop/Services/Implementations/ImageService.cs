@@ -43,7 +43,7 @@ public class ImageService : IImageService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate image URI for path: {ImagePath}", imagePath);
-            return "/images/default.jpg"; // Return default image on failure
+            return "/images/default.jpg";
         }
     }
 }
