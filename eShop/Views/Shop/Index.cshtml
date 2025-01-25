@@ -1,4 +1,4 @@
-@model IEnumerable<ShopItem>
+@model IEnumerable<ShopItemViewModel>
 
 <div class="container">
     <h2 class="mt-4 mb-3">Shop Items</h2>
@@ -14,9 +14,9 @@
             {
                 <div class="col-md-4 mb-4">
                     <div class="card">
-                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        @if (!string.IsNullOrEmpty(item.ImageUri))
                         {
-                            <img src="@item.ImagePath" class="card-img-top" alt="@item.Name" />
+                            <img src="@item.ImageUri" class="card-img-top" alt="@item.Name" />
                         }
                         <div class="card-body">
                             <h5 class="card-title">@item.Name</h5>

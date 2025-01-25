@@ -1,4 +1,5 @@
 using eShop.Data;
+using eShop.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace eShop.Extensions;
@@ -11,8 +12,12 @@ public static class DatabaseConfiguration
         var connectionString = configuration.GetConnectionString(connectionStringName)
                                ?? throw new InvalidOperationException("Database connection string is not configured.");
 
+        // Register ApplicationDbContext
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        // Map IApplicationDbContext to ApplicationDbContext
+        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         return services;
     }
