@@ -11,6 +11,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.ConfigureDatabase(builder.Configuration);
 builder.Services.ConfigureBlobStorage(builder.Configuration);
 builder.Services.ConfigureApplicationServices();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 

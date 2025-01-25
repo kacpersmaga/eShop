@@ -1,3 +1,4 @@
+using AutoMapper;
 using eShop.Mappers;
 using eShop.Models;
 using eShop.Services;
@@ -11,15 +12,18 @@ namespace eShop.Controllers
         private readonly IItemService _itemService;
         private readonly IBlobStorageService _blobStorageService;
         private readonly ILogger<AdminController> _logger;
+        private readonly IMapper _mapper;
 
         public AdminController(
             IItemService itemService, 
             IBlobStorageService blobStorageService, 
-            ILogger<AdminController> logger)
+            ILogger<AdminController> logger,
+            IMapper mapper)
         {
             _itemService = itemService;
             _blobStorageService = blobStorageService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         public IActionResult Index()
@@ -56,7 +60,9 @@ namespace eShop.Controllers
                     imagePath = await _blobStorageService.UploadFileAsync(Image);
                 }
 
-                var shopItem = ShopItemMapper.MapToShopItem(item, imagePath);
+                var shopItem = _mapper.Map<ShopItem>(item);
+                shopItem.ImagePath = imagePath;
+                
                 await _itemService.AddItem(shopItem);
 
                 TempData["SuccessMessage"] = $"Item '{item.Name}' added successfully!";

@@ -12,6 +12,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading.Tasks;
+using AutoMapper;
 using Xunit;
 
 public class AdminControllerTests
@@ -19,6 +20,7 @@ public class AdminControllerTests
     private readonly Mock<IItemService> _mockItemService;
     private readonly Mock<IBlobStorageService> _mockBlobStorageService;
     private readonly Mock<ILogger<AdminController>> _mockLogger;
+    private readonly Mock<IMapper> _mockMapper;
     private readonly AdminController _controller;
 
     public AdminControllerTests()
@@ -26,10 +28,12 @@ public class AdminControllerTests
         _mockItemService = new Mock<IItemService>();
         _mockBlobStorageService = new Mock<IBlobStorageService>();
         _mockLogger = new Mock<ILogger<AdminController>>();
+        _mockMapper = new Mock<IMapper>();
         _controller = new AdminController(
             _mockItemService.Object,
             _mockBlobStorageService.Object,
-            _mockLogger.Object
+            _mockLogger.Object,
+            _mockMapper.Object
         );
     }
 
