@@ -1,4 +1,5 @@
 using eShop.Extensions;
+using eShop.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,8 +11,16 @@ builder.Host.ConfigureSerilog();
 builder.Services.AddControllersWithViews();
 builder.Services.ConfigureDatabase(builder.Configuration);
 builder.Services.ConfigureBlobStorage(builder.Configuration);
-builder.Services.ConfigureApplicationServices();
 
+// Register application services with scoped lifetime
+builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+
+// Add AutoMapper for object-to-object mapping
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// Add in-memory caching for storing temporary data
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
@@ -19,10 +28,19 @@ var app = builder.Build();
 app.ApplyDatabaseMigrations();
 
 // Configure middleware
-app.ConfigureMiddleware(app.Environment);
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
 
 // Configure endpoints
-app.UseEndpoints(endpoints => endpoints.ConfigureRoutes());
+app.MapDefaultControllerRoute();
 
 app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 

@@ -1,64 +1,101 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using eShop.Data;
 using eShop.Models;
 using eShop.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
 public class ItemServiceTests
 {
-    private readonly Mock<IApplicationDbContext> _mockContext;
+    private readonly ApplicationDbContext _context;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
+    private readonly IMemoryCache _cache;
     private readonly ItemService _itemService;
 
     public ItemServiceTests()
     {
-        _mockContext = new Mock<IApplicationDbContext>();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        _context = new ApplicationDbContext(options);
         _mockLogger = new Mock<ILogger<ItemService>>();
-        _itemService = new ItemService(_mockContext.Object, _mockLogger.Object);
+        _cache = new MemoryCache(new MemoryCacheOptions());
+
+        _itemService = new ItemService(_context, _mockLogger.Object, _cache);
     }
 
+
+
     [Fact]
-    public async Task GetAllItems_ShouldLogInformationAndReturnItems()
+    public async Task GetAllItems_ShouldReturnItemsFromCache_WhenCacheIsAvailable()
     {
+
         // Arrange
-        var items = new List<ShopItem>
+        const string cacheKey = "all_shop_items";
+        var cachedItems = new List<ShopItem>
         {
-            new ShopItem { Id = 1, Name = "Item1", Price = 10.0m, Category = "Category1" },
-            new ShopItem { Id = 2, Name = "Item2", Price = 20.0m, Category = "Category2" }
+            new ShopItem { Id = 1, Name = "CachedItem1", Price = 10.0m, Category = "Category1" },
+            new ShopItem { Id = 2, Name = "CachedItem2", Price = 20.0m, Category = "Category2" }
         };
 
-        var dbSetMock = MockDbSet(items);
-        _mockContext.Setup(c => c.ShopItems).Returns(dbSetMock.Object);
+        _cache.Set(cacheKey, cachedItems);
 
         // Act
         var result = await _itemService.GetAllItems();
 
         // Assert
-        Assert.Equal(items.Count, result.Count());
-        Assert.Contains(result, item => item.Name == "Item1");
-        Assert.Contains(result, item => item.Name == "Item2");
-        
+        Assert.Equal(cachedItems.Count, result.Count());
+        Assert.Contains(result, item => item.Name == "CachedItem1");
+        Assert.Contains(result, item => item.Name == "CachedItem2");
+
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Fetching all items from the database.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Returning cached shop items.")),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()
             ),
             Times.Once
         );
+
+        Assert.Empty(await _context.ShopItems.ToListAsync()); // Ensure database was NOT queried
     }
 
     [Fact]
-    public async Task AddItem_ShouldLogInformationAndAddItem()
+    public async Task GetAllItems_ShouldFetchFromDatabase_WhenCacheIsEmpty()
     {
+
+        // Arrange
+        _context.ShopItems.AddRange(new List<ShopItem>
+        {
+            new ShopItem { Id = 1, Name = "DBItem1", Price = 10.0m, Category = "Category1" },
+            new ShopItem { Id = 2, Name = "DBItem2", Price = 20.0m, Category = "Category2" }
+        });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _itemService.GetAllItems();
+
+        // Assert
+        Assert.Equal(2, result.Count());
+        Assert.Contains(result, item => item.Name == "DBItem1");
+        Assert.Contains(result, item => item.Name == "DBItem2");
+
+        Assert.True(_cache.TryGetValue("all_shop_items", out _)); // Verify cache was updated
+    }
+
+    [Fact]
+    public async Task AddItem_ShouldInvalidateCache()
+    {
+
         // Arrange
         var newItem = new ShopItem
         {
@@ -68,51 +105,29 @@ public class ItemServiceTests
             Category = "Category3"
         };
 
-        var dbSetMock = MockDbSet(new List<ShopItem>());
-        _mockContext.Setup(c => c.ShopItems).Returns(dbSetMock.Object);
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        _cache.Set("all_shop_items", new List<ShopItem>());
 
         // Act
         await _itemService.AddItem(newItem);
 
         // Assert
-        dbSetMock.Verify(d => d.AddAsync(newItem, It.IsAny<CancellationToken>()), Times.Once);
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        var items = await _context.ShopItems.ToListAsync();
+        Assert.Single(items);
+        Assert.Equal("NewItem", items[0].Name);
 
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Adding a new item")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()
-            ),
-            Times.Once
-        );
-
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Successfully added item")),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()
-            ),
-            Times.Once
-        );
+        Assert.False(_cache.TryGetValue("all_shop_items", out _)); // Verify cache invalidation
     }
 
     [Fact]
     public async Task AddItem_ShouldLogErrorWhenExceptionOccurs()
     {
+
         // Arrange
         var newItem = new ShopItem { Id = 3, Name = "ErrorItem", Price = 40.0m, Category = "ErrorCategory" };
-        _mockContext.Setup(c => c.ShopItems.AddAsync(newItem, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Database error"));
+        _context.Dispose(); // Force an error by disposing the database
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _itemService.AddItem(newItem));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => _itemService.AddItem(newItem));
 
         _mockLogger.Verify(
             x => x.Log(
@@ -125,15 +140,5 @@ public class ItemServiceTests
             Times.Once
         );
     }
-
-    private Mock<DbSet<T>> MockDbSet<T>(List<T> list) where T : class
-    {
-        var queryable = list.AsQueryable();
-        var dbSetMock = new Mock<DbSet<T>>();
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-        return dbSetMock;
-    }
+    
 }

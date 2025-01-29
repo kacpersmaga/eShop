@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eShop.Data;
 
-public class ApplicationDbContext : DbContext, IApplicationDbContext
+public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

@@ -15,9 +15,7 @@ public static class DatabaseConfiguration
         // Register ApplicationDbContext
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString));
-
-        // Map IApplicationDbContext to ApplicationDbContext
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        
 
         return services;
     }
