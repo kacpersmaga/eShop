@@ -1,32 +1,61 @@
-@model IEnumerable<ShopItemViewModel>
+@{
+    ViewBag.Title = "Shop Items";
+    Layout = "_Layout";
+}
 
 <div class="container">
     <h2 class="mt-4 mb-3">Shop Items</h2>
 
-    @if (!Model.Any())
-    {
-        <p>No items available.</p>
-    }
-    else
-    {
-        <div class="row">
-            @foreach (var item in Model)
-            {
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        @if (!string.IsNullOrEmpty(item.ImageUri))
-                        {
-                            <img src="@item.ImageUri" class="card-img-top" alt="@item.Name" />
-                        }
-                        <div class="card-body">
-                            <h5 class="card-title">@item.Name</h5>
-                            <p class="card-text">@item.Description</p>
-                            <p class="card-text"><strong>Category:</strong> @item.Category</p>
-                            <p class="card-text"><strong>Price:</strong> $@item.Price</p>
-                        </div>
+    <div id="loadingMessage">Loading items...</div>
+    <div id="errorMessage" class="alert alert-danger d-none"></div>
+    <div id="shopItems" class="row"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function() {
+    await loadShopItems();
+});
+
+async function loadShopItems() {
+    try {
+        const response = await fetch('/api/shop/items');
+        if (!response.ok) {
+            throw new Error('Failed to load items');
+        }
+
+        const items = await response.json();
+        const shopItemsContainer = document.getElementById('shopItems');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loadingMessage.style.display = 'none';
+        shopItemsContainer.innerHTML = '';
+
+        if (items.length === 0) {
+            shopItemsContainer.innerHTML = '<p>No items available.</p>';
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'col-md-4 mb-4';
+            card.innerHTML = `
+                <div class="card">
+                    ${item.imageUri ? `<img src="${item.imageUri}" class="card-img-top" alt="${item.name}">` : ''}
+                    <div class="card-body">
+                        <h5 class="card-title">${item.name}</h5>
+                        <p class="card-text">${item.description}</p>
+                        <p class="card-text"><strong>Category:</strong> ${item.category}</p>
+                        <p class="card-text"><strong>Price:</strong> $${item.price}</p>
                     </div>
                 </div>
-            }
-        </div>
+            `;
+            shopItemsContainer.appendChild(card);
+        });
+
+    } catch (error) {
+        document.getElementById('errorMessage').classList.remove('d-none');
+        document.getElementById('errorMessage').innerText = "Error loading shop items.";
     }
-</div>
+}
+</script>

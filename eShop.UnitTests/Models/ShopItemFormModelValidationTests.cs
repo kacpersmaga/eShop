@@ -1,10 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
-using System.Linq;
-using eShop.Models;
-using Xunit;
+using eShop.Models.Domain;
 
-namespace eShop.Tests;
+namespace UnitTests.Models;
 
 public class ShopItemFormModelValidationTests
 {
@@ -12,21 +9,21 @@ public class ShopItemFormModelValidationTests
     public void ShopItem_Should_Have_DefaultValues()
     {
         // Arrange
-        var shopItem = new ShopItem();
+        var shopItem = new ShopItem { Name = "", Category = "", Price = 0 };
 
         // Assert
         Assert.Equal(string.Empty, shopItem.Name);
         Assert.Equal(string.Empty, shopItem.Category);
         Assert.Null(shopItem.Description);
         Assert.Null(shopItem.ImagePath);
-        Assert.Equal(0, shopItem.Price); // Default value for decimal
+        Assert.Equal(0, shopItem.Price);
     }
 
     [Fact]
     public void ShopItem_Should_Require_Name()
     {
         // Arrange
-        var shopItem = new ShopItem { Name = null };
+        var shopItem = new ShopItem { Name = "", Category = "Test", Price = 10 };
 
         // Act
         var validationResults = ValidateModel(shopItem);
@@ -39,7 +36,7 @@ public class ShopItemFormModelValidationTests
     public void ShopItem_Should_Require_Category()
     {
         // Arrange
-        var shopItem = new ShopItem { Category = null };
+        var shopItem = new ShopItem { Name = "Test", Category = "", Price = 10 };
 
         // Act
         var validationResults = ValidateModel(shopItem);
@@ -88,15 +85,15 @@ public class ShopItemFormModelValidationTests
         var validationResultsInvalid = ValidateModel(shopItemInvalid);
 
         // Assert
-        Assert.Empty(validationResultsValid); // Valid description should have no validation errors
-        Assert.Contains(validationResultsInvalid, v => v.MemberNames.Contains(nameof(ShopItem.Description))); // Invalid description should raise validation error
+        Assert.Empty(validationResultsValid);
+        Assert.Contains(validationResultsInvalid, v => v.MemberNames.Contains(nameof(ShopItem.Description)));
     }
 
     [Fact]
     public void ShopItem_Should_Validate_Required_Fields()
     {
         // Arrange
-        var shopItem = new ShopItem { Name = null, Category = null };
+        var shopItem = new ShopItem { Name = "", Category = "", Price = 10 };
 
         // Act
         var validationResults = ValidateModel(shopItem);

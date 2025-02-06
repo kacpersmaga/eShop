@@ -1,7 +1,7 @@
 using eShop.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace eShop.Extensions;
+namespace eShop.Extensions.Database;
 
 public static class DatabaseMigrationExtensions
 {
@@ -13,9 +13,22 @@ public static class DatabaseMigrationExtensions
 
         try
         {
+            var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            dbContext.Database.Migrate();
-            logger.LogInformation("Database migrations applied successfully.");
+            
+            if (env.IsEnvironment("Test"))
+            {
+                logger.LogInformation("Applying migrations for Test environment...");
+                dbContext.Database.EnsureDeleted();
+                dbContext.Database.Migrate();
+                logger.LogInformation("Migrations applied successfully for Test environment.");
+            }
+            else
+            {
+                dbContext.Database.Migrate();
+                logger.LogInformation("Migrations applied successfully.");
+            }
         }
         catch (Exception ex)
         {
@@ -23,4 +36,6 @@ public static class DatabaseMigrationExtensions
             throw;
         }
     }
+
+
 }

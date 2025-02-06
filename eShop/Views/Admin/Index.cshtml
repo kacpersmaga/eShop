@@ -1,6 +1,6 @@
 @{
-ViewBag.Title = "Admin Dashboard";
-Layout = "_Layout";
+    ViewBag.Title = "Admin Dashboard";
+    Layout = "_Layout";
 }
 
 <div class="container-fluid">
@@ -11,24 +11,10 @@ Layout = "_Layout";
                 <h4 class="text-center py-3">Admin Panel</h4>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" asp-controller="Admin" asp-action="Index">
-                            <i class="bi bi-house-door"></i> Dashboard
-                        </a>
+                        <a class="nav-link active" href="#">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="AddItem">
-                            <i class="bi bi-people"></i> Add item
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Reports">
-                            <i class="bi bi-graph-up"></i> Reports
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Admin" asp-action="Settings">
-                            <i class="bi bi-gear"></i> Settings
-                        </a>
+                        <a class="nav-link" href="/admin/add-item">Add Item</a>
                     </li>
                 </ul>
             </div>
@@ -41,8 +27,64 @@ Layout = "_Layout";
             </div>
 
             <div class="content">
-                <p>Welcome to the Admin Dashboard. Use the menu on the left to navigate through the admin features.</p>
+                <h3>Item List</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Image</th>
+                    </tr>
+                    </thead>
+                    <tbody id="itemsTable">
+                    <!-- Items will be loaded dynamically -->
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadItems();
+    });
+
+    async function loadItems() {
+        try {
+            const response = await fetch('/api/shop/items');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch items');
+            }
+
+            const items = await response.json();
+            const tableBody = document.getElementById('itemsTable');
+            tableBody.innerHTML = '';
+
+            if (items.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No items available.</td></tr>';
+                return;
+            }
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>$${item.price.toFixed(2)}</td>
+                    <td>
+                        ${item.imageUri
+                    ? `<img src="${item.imageUri}" alt="${item.name}" width="50" height="50" />`
+                    : 'No Image'}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error('Error loading items:', error);
+        }
+    }
+</script>

@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.UnitTests", "eShop.Un
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.IntegrationTests", "eShop.IntegrationTests\eShop.IntegrationTests.csproj", "{C18E456D-E1DF-45B8-A2F4-B32AB2197357}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.FunctionalTests", "eShop.FunctionalTests\eShop.FunctionalTests.csproj", "{04F32B3F-F2F4-4C6A-BD6C-3A02928CAE43}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,9 +29,5 @@ Global
 		{C18E456D-E1DF-45B8-A2F4-B32AB2197357}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C18E456D-E1DF-45B8-A2F4-B32AB2197357}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C18E456D-E1DF-45B8-A2F4-B32AB2197357}.Release|Any CPU.Build.0 = Release|Any CPU
-		{04F32B3F-F2F4-4C6A-BD6C-3A02928CAE43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{04F32B3F-F2F4-4C6A-BD6C-3A02928CAE43}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{04F32B3F-F2F4-4C6A-BD6C-3A02928CAE43}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{04F32B3F-F2F4-4C6A-BD6C-3A02928CAE43}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

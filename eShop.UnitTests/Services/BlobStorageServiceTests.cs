@@ -1,15 +1,12 @@
 using Azure.Storage.Sas;
-using eShop.Services;
+using eShop.Services.Implementations;
+using eShop.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Serilog;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Xunit;
+
+namespace UnitTests.Services;
 
 public class BlobStorageServiceTests
 {
@@ -34,7 +31,7 @@ public class BlobStorageServiceTests
     public async Task UploadFileAsync_NullFile_ThrowsArgumentNullException()
     {
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UploadFileAsync(null));
+        var exception = await Assert.ThrowsAsync<ArgumentNullException>(() => _service.UploadFileAsync(null!));
         Assert.Equal("file", exception.ParamName);
     }
 
@@ -71,9 +68,9 @@ public class BlobStorageServiceTests
         _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("File uploaded successfully")),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("File uploaded successfully")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
@@ -96,7 +93,7 @@ public class BlobStorageServiceTests
     public void GetBlobSasUri_NullBlobName_ThrowsArgumentException()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _service.GetBlobSasUri(null));
+        var exception = Assert.Throws<ArgumentException>(() => _service.GetBlobSasUri(null!));
         Assert.Equal("blobName", exception.ParamName);
     }
 
@@ -116,16 +113,16 @@ public class BlobStorageServiceTests
         _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Generated SAS URI for blob")),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated SAS URI for blob")),
             null,
-            (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()), Times.Once);
+            (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()), Times.Once);
     }
 
     [Fact]
     public void Constructor_NullBlobWrapper_ThrowsArgumentNullException()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(null, _mockConfiguration.Object, _mockLogger.Object));
+        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(null!, _mockConfiguration.Object, _mockLogger.Object));
         Assert.Equal("blobWrapper", exception.ParamName);
     }
 
@@ -133,7 +130,7 @@ public class BlobStorageServiceTests
     public void Constructor_NullConfiguration_ThrowsArgumentNullException()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(_mockBlobWrapper.Object, null, _mockLogger.Object));
+        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(_mockBlobWrapper.Object, null!, _mockLogger.Object));
         Assert.Equal("configuration", exception.ParamName);
     }
 
@@ -141,7 +138,7 @@ public class BlobStorageServiceTests
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(_mockBlobWrapper.Object, _mockConfiguration.Object, null));
+        var exception = Assert.Throws<ArgumentNullException>(() => new BlobStorageService(_mockBlobWrapper.Object, _mockConfiguration.Object, null!));
         Assert.Equal("logger", exception.ParamName);
     }
 }

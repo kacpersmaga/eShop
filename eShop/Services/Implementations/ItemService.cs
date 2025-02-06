@@ -1,29 +1,24 @@
 using eShop.Data;
-using eShop.Models;
+using eShop.Models.Domain;
+using eShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace eShop.Services;
+namespace eShop.Services.Implementations;
 
-public class ItemService : IItemService
+public class ItemService(ApplicationDbContext context, ILogger<ItemService> logger, IMemoryCache cache)
+    : IItemService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly ILogger<ItemService> _logger;
-    private readonly IMemoryCache _cache;
+    private readonly ApplicationDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
+    private readonly ILogger<ItemService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
-
-    public ItemService(ApplicationDbContext context, ILogger<ItemService> logger, IMemoryCache cache)
-    {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
-    }
 
     public async Task<IEnumerable<ShopItem>> GetAllItems()
     {
         const string cacheKey = "all_shop_items";
         
-        if (_cache.TryGetValue(cacheKey, out IEnumerable<ShopItem> cachedItems))
+        if (_cache.TryGetValue(cacheKey, out IEnumerable<ShopItem>? cachedItems) && cachedItems != null)
         {
             _logger.LogInformation("Returning cached shop items.");
             return cachedItems;

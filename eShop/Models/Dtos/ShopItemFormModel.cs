@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace eShop.Models;
+namespace eShop.Models.Dtos;
 
 public record ShopItemFormModel
 {
     [Required(ErrorMessage = "Name is required.")]
     [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
-    public string Name { get; init; } = string.Empty;
+    public required string Name { get; init; }
 
     [Required(ErrorMessage = "Price is required.")]
     [Range(0.01, 100000, ErrorMessage = "Price must be between $0.01 and $100,000.")]
@@ -17,7 +17,7 @@ public record ShopItemFormModel
 
     [Required(ErrorMessage = "Category is required.")]
     [StringLength(50, ErrorMessage = "Category cannot exceed 50 characters.")]
-    public string Category { get; init; } = string.Empty;
+    public required string Category { get; init; }
 
     public IFormFile? Image { get; init; }
 }

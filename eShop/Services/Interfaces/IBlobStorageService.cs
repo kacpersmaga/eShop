@@ -1,4 +1,4 @@
-namespace eShop.Services;
+namespace eShop.Services.Interfaces;
 
 public interface IBlobStorageService
 {

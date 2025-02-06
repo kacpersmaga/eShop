@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace eShop.Extensions;
+namespace eShop.Extensions.Logging;
 
 public static class LoggingConfiguration
 {

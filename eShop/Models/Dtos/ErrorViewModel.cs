@@ -1,4 +1,4 @@
-namespace eShop.Models;
+namespace eShop.Models.Dtos;
 
 public class ErrorViewModel
 {

@@ -1,7 +1,8 @@
 using AutoMapper;
-using eShop.Models;
+using eShop.Models.Domain;
+using eShop.Models.Dtos;
 
-namespace eShop.Mappers;
+namespace eShop.Mappers.Profiles;
 
 public class ShopItemMappingProfile : Profile
 {

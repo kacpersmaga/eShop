@@ -1,90 +1,19 @@
-using AutoMapper;
-using eShop.Mappers;
-using eShop.Models;
-using eShop.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
-namespace eShop.Controllers
+namespace eShop.Controllers;
+
+[Route("admin")]
+public class AdminController : Controller
 {
-    public class AdminController : Controller
+    [HttpGet("")]
+    public IActionResult Index()
     {
-        private readonly IItemService _itemService;
-        private readonly IBlobStorageService _blobStorageService;
-        private readonly ILogger<AdminController> _logger;
-        private readonly IMapper _mapper;
+        return View();
+    }
 
-        public AdminController(
-            IItemService itemService, 
-            IBlobStorageService blobStorageService, 
-            ILogger<AdminController> logger,
-            IMapper mapper)
-        {
-            _itemService = itemService;
-            _blobStorageService = blobStorageService;
-            _logger = logger;
-            _mapper = mapper;
-        }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        public IActionResult AddItem()
-        {
-            return View(new ShopItemFormModel());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddItem(ShopItemFormModel item, IFormFile Image)
-        {
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning(
-                    "Invalid model state while adding item '{ItemName}' by user {User}.", 
-                    item.Name, 
-                    User?.Identity?.Name ?? "Anonymous"
-                );
-                
-                return View(item);
-            }
-
-            try
-            {
-                string? imagePath = null;
-
-                if (Image != null && Image.Length > 0)
-                {
-                    imagePath = await _blobStorageService.UploadFileAsync(Image);
-                }
-
-                var shopItem = _mapper.Map<ShopItem>(item);
-                shopItem.ImagePath = imagePath;
-                
-                await _itemService.AddItem(shopItem);
-
-                TempData["SuccessMessage"] = $"Item '{item.Name}' added successfully!";
-                _logger.LogInformation(
-                    "Item '{ItemName}' added successfully by user {User}.", 
-                    item.Name, 
-                    User?.Identity?.Name ?? "Anonymous"
-                );
-
-                return RedirectToAction("AddItem");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Error occurred while adding item '{ItemName}' by user {User}.", 
-                    item.Name, 
-                    User?.Identity?.Name ?? "Anonymous"
-                );
-
-                ModelState.AddModelError("", "An error occurred while processing your request. Please try again later.");
-                return View(item);
-            }
-        }
+    [HttpGet("add-item")]
+    public IActionResult AddItem()
+    {
+        return View();
     }
 }

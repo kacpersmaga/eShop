@@ -1,11 +1,11 @@
-namespace eShop.Models;
+namespace eShop.Models.Dtos;
 
 public class ShopItemViewModel
 {
     public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
     public decimal Price { get; set; }
     public string? Description { get; set; }
-    public string Category { get; set; } = string.Empty;
-    public string? ImageUri { get; set; } // Contains the SAS URI
+    public required string Category { get; set; }
+    public string? ImageUri { get; set; }
 }

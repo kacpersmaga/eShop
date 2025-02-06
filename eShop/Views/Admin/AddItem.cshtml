@@ -1,54 +1,74 @@
-@model eShop.Models.ShopItemFormModel
+@{
+    ViewBag.Title = "Add New Item";
+    Layout = "_Layout";
+}
 
 <div class="container">
     <h2 class="mt-4 mb-3">Add New Item</h2>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-    }
+    <div id="successMessage" class="alert alert-success d-none"></div>
+    <div id="errorMessage" class="alert alert-danger d-none"></div>
 
-    <form asp-action="AddItem" method="post" enctype="multipart/form-data">
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-
+    <form id="addItemForm" enctype="multipart/form-data">
         <div class="mb-3">
-            <label asp-for="Name" class="form-label"></label>
-            <input asp-for="Name" class="form-control" placeholder="Enter item name" />
-            <span asp-validation-for="Name" class="text-danger"></span>
+            <label for="Name" class="form-label">Item Name</label>
+            <input type="text" id="Name" name="Name" class="form-control" required />
         </div>
 
         <div class="mb-3">
-            <label asp-for="Price" class="form-label"></label>
-            <input asp-for="Price" class="form-control" placeholder="Enter item price" step="0.01" />
-            <span asp-validation-for="Price" class="text-danger"></span>
+            <label for="Price" class="form-label">Price</label>
+            <input type="number" id="Price" name="Price" class="form-control" step="0.01" required />
         </div>
 
         <div class="mb-3">
-            <label asp-for="Description" class="form-label"></label>
-            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter item description"></textarea>
-            <span asp-validation-for="Description" class="text-danger"></span>
+            <label for="Description" class="form-label">Description</label>
+            <textarea id="Description" name="Description" class="form-control"></textarea>
         </div>
 
         <div class="mb-3">
-            <label asp-for="Category" class="form-label"></label>
-            <select asp-for="Category" class="form-select">
+            <label for="Category" class="form-label">Category</label>
+            <select id="Category" name="Category" class="form-select" required>
                 <option value="" disabled selected>Choose a category</option>
                 <option value="Electronics">Electronics</option>
                 <option value="Clothing">Clothing</option>
                 <option value="Books">Books</option>
                 <option value="Home Appliances">Home Appliances</option>
             </select>
-            <span asp-validation-for="Category" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
-            <label asp-for="Image" class="form-label"></label>
-            <input asp-for="Image" class="form-control" accept="image/*" />
-            <span asp-validation-for="Image" class="text-danger"></span>
+            <label for="Image" class="form-label">Upload Image (Optional)</label>
+            <input type="file" id="Image" name="Image" class="form-control" accept="image/*" />
         </div>
 
-        <button type="submit" class="btn btn-primary">Add Item</button>
+        <button type="button" class="btn btn-primary" onclick="submitItem()">Add Item</button>
     </form>
 </div>
+
+<script>
+    async function submitItem() {
+        const formData = new FormData(document.getElementById('addItemForm'));
+
+        try {
+            const response = await fetch('/api/admin/add', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                document.getElementById('successMessage').classList.remove('d-none');
+                document.getElementById('successMessage').innerText = result.message;
+                document.getElementById('errorMessage').classList.add('d-none');
+            } else {
+                document.getElementById('errorMessage').classList.remove('d-none');
+                document.getElementById('errorMessage').innerText = result.error || "An error occurred";
+                document.getElementById('successMessage').classList.add('d-none');
+            }
+        } catch (error) {
+            document.getElementById('errorMessage').classList.remove('d-none');
+            document.getElementById('errorMessage').innerText = "An unexpected error occurred";
+        }
+    }
+</script>

@@ -1,6 +1,6 @@
-using eShop.Models;
+using eShop.Models.Domain;
 
-namespace eShop.Services;
+namespace eShop.Services.Interfaces;
 
 public interface IItemService
 {
