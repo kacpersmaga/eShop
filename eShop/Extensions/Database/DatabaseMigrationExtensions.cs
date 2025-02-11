@@ -13,22 +13,9 @@ public static class DatabaseMigrationExtensions
 
         try
         {
-            var env = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            
-            if (env.IsEnvironment("Test"))
-            {
-                logger.LogInformation("Applying migrations for Test environment...");
-                dbContext.Database.EnsureDeleted();
-                dbContext.Database.Migrate();
-                logger.LogInformation("Migrations applied successfully for Test environment.");
-            }
-            else
-            {
-                dbContext.Database.Migrate();
-                logger.LogInformation("Migrations applied successfully.");
-            }
+            dbContext.Database.Migrate();
+            logger.LogInformation("Migrations applied successfully.");
         }
         catch (Exception ex)
         {

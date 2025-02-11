@@ -1,23 +1,9 @@
-﻿version: '3.8'
+﻿version: '3.9'
 
 services:
-  eshop:
-    image: eshop
-    build:
-      context: .
-      dockerfile: eShop/Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-    networks:
-      - app-network
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=DockerConnection
-
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: eshop-db
     environment:
       SA_PASSWORD: "Password123!"
       ACCEPT_EULA: "Y"
@@ -26,7 +12,49 @@ services:
     networks:
       - app-network
     volumes:
-      - mssql-data:/var/opt/mssql  
+      - mssql-data:/var/opt/mssql
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azurite-local
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    networks:
+      - app-network
+
+  eshop:
+    build:
+      context: .
+      dockerfile: eShop/Dockerfile
+    container_name: eshop-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - azurite
+    networks:
+      - app-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION=DockerConnection
+
+  integration-tests:
+    build:
+      context: .
+      dockerfile: eShop.IntegrationTests/Dockerfile
+    container_name: eshop-integration-tests
+
+    depends_on:
+      - db
+      - azurite
+      - eshop
+    networks:
+      - app-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - DB_CONNECTION=TestConnection
 
 networks:
   app-network:
@@ -34,3 +62,4 @@ networks:
 
 volumes:
   mssql-data:
+

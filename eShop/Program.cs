@@ -31,10 +31,6 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // Add in-memory caching for storing temporary data
 builder.Services.AddMemoryCache();
 
-
-
-
-
 var app = builder.Build();
 
 // Apply database migrations on startup
