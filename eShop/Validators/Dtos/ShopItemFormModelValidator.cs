@@ -1,8 +1,7 @@
 using eShop.Models.Dtos;
 using FluentValidation;
 
-
-namespace eShop.Validators;
+namespace eShop.Validators.Dtos;
 
 public class ShopItemFormModelValidator : AbstractValidator<ShopItemFormModel>
 {
