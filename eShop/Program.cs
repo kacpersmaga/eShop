@@ -3,6 +3,7 @@ using eShop.Extensions.Logging;
 using eShop.Extensions.Storage;
 using eShop.Services.Implementations;
 using eShop.Services.Interfaces;
+using FluentValidation;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +31,9 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Add in-memory caching for storing temporary data
 builder.Services.AddMemoryCache();
+
+// Add FluentValidation for model validation
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
