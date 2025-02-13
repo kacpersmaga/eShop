@@ -3,18 +3,44 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using eShop.Data;
 using eShop.Models.Dtos;
 using eShop.Models.Domain;
 using eShop.Services.Interfaces;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using IntegrationTests.Fakes;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationTests.Controllers;
 
-public class ShopApiIntegrationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
+public class ShopApiIntegrationTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
+
+    public ShopApiIntegrationTests(CustomWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _client = _factory.CreateClient();
+    }
+    
+    public async Task InitializeAsync()
+    {
+        await CleanDatabaseAsync();
+    }
+    
+    public async Task DisposeAsync()
+    {
+        await CleanDatabaseAsync();
+    }
+
+    private async Task CleanDatabaseAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.ShopItems.ExecuteDeleteAsync();
+    }
 
     [Fact]
     public async Task GetItems_ReturnsListOfItems_IncludingNewlyAddedItem()
@@ -52,7 +78,7 @@ public class ShopApiIntegrationTests(CustomWebApplicationFactory factory) : ICla
     public async Task GetItems_WhenServiceThrows_ReturnsInternalServerError()
     {
         // Arrange
-        var factoryWithFaultyService = factory.WithWebHostBuilder(builder =>
+        var factoryWithFaultyService = _factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {

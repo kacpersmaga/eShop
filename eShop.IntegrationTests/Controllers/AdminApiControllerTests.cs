@@ -1,19 +1,47 @@
+
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using eShop.Data;
 using eShop.Models.Domain;
 using eShop.Services.Interfaces;
-using IntegrationTests.Fakes;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using IntegrationTests.Fakes;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationTests.Controllers;
 
-public class AdminControllerIntegrationTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
+public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client = factory.CreateClient();
+    private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
+
+    public AdminControllerIntegrationTests(CustomWebApplicationFactory factory)
+    {
+        _factory = factory;
+        _client = _factory.CreateClient();
+    }
+
+    // Called before each test runs.
+    public async Task InitializeAsync()
+    {
+        await CleanDatabaseAsync();
+    }
+
+    // Called after each test runs.
+    public async Task DisposeAsync()
+    {
+        await CleanDatabaseAsync();
+    }
+
+    private async Task CleanDatabaseAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.ShopItems.ExecuteDeleteAsync();
+    }
 
     [Fact]
     public async Task AddItem_ValidModel_ReturnsOk()
@@ -33,8 +61,8 @@ public class AdminControllerIntegrationTests(CustomWebApplicationFactory factory
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        using var scope = factory.Services.CreateScope();
+
+        using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var item = context.ShopItems.FirstOrDefault(x => x.Name == "TestItem");
 
@@ -63,7 +91,7 @@ public class AdminControllerIntegrationTests(CustomWebApplicationFactory factory
     public async Task AddItem_WhenBlobServiceThrows_ReturnsInternalServerError()
     {
         // Arrange
-        var factoryWithFaultyBlob = factory.WithWebHostBuilder(builder =>
+        var factoryWithFaultyBlob = _factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
@@ -92,11 +120,10 @@ public class AdminControllerIntegrationTests(CustomWebApplicationFactory factory
 
         // Assert
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-        
+
         var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(errorResponse);
         Assert.Contains("error", errorResponse.Error, StringComparison.OrdinalIgnoreCase);
     }
 }
-

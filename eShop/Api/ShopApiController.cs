@@ -1,3 +1,4 @@
+using AutoMapper;
 using eShop.Models.Domain;
 using eShop.Models.Dtos;
 using eShop.Services.Interfaces;
@@ -9,12 +10,12 @@ namespace eShop.Api;
 [Route("api/shop")]
 public class ShopApiController(
     IItemService itemService,
-    IImageService imageService,
+    IMapper mapper,
     ILogger<ShopApiController> logger)
     : ControllerBase
 {
     private readonly IItemService _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
-    private readonly IImageService _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
+    private readonly IMapper _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     private readonly ILogger<ShopApiController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     [HttpGet("items")]
@@ -23,17 +24,7 @@ public class ShopApiController(
         try
         {
             var items = await _itemService.GetAllItems();
-
-            var itemDtos = items.Select(item => new ShopItemViewModel()
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Price = item.Price,
-                Description = item.Description,
-                Category = item.Category,
-                ImageUri = _imageService.GetImageUri(item.ImagePath ?? "default.jpg")
-            }).ToList();
-
+            var itemDtos = _mapper.Map<List<ShopItemViewModel>>(items);
             return Ok(itemDtos);
         }
         catch (Exception ex)
