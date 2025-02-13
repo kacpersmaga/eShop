@@ -32,7 +32,7 @@ public class ShopApiController(
                 Description = item.Description,
                 Category = item.Category,
                 ImageUri = _imageService.GetImageUri(item.ImagePath ?? "default.jpg")
-            });
+            }).ToList();
 
             return Ok(itemDtos);
         }

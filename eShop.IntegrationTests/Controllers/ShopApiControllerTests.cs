@@ -1,92 +1,79 @@
+using System.Globalization;
 using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
-using eShop.Api;
-using eShop.Models.Domain;
 using eShop.Models.Dtos;
+using eShop.Models.Domain;
 using eShop.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc.Testing;
+using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
+using IntegrationTests.Fakes;
 
-namespace IntegrationTests.Controllers
+namespace IntegrationTests.Controllers;
+
+public class ShopApiIntegrationTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    public class ShopApiControllerTests : IClassFixture<WebApplicationFactory<ShopApiController>>
+    private readonly HttpClient _client = factory.CreateClient();
+
+    [Fact]
+    public async Task GetItems_ReturnsListOfItems_IncludingNewlyAddedItem()
     {
-        private readonly HttpClient _client;
-        private readonly Mock<IItemService> _mockItemService;
-        private readonly Mock<IImageService> _mockImageService;
-        private readonly Mock<ILogger<ShopApiController>> _mockLogger;
-
-        public ShopApiControllerTests(WebApplicationFactory<ShopApiController> factory)
+        // Arrange
+        var formData = new MultipartFormDataContent();
+        var uniqueItemName = "Item for GET test " + Guid.NewGuid();
+        formData.Add(new StringContent(uniqueItemName), "Name");
+        formData.Add(new StringContent(9.99.ToString(CultureInfo.CurrentCulture)), "Price");
+        formData.Add(new StringContent("Description for GET test"), "Description");
+        formData.Add(new StringContent("GET Test Category"), "Category");
+        var fileContent = new ByteArrayContent([1, 2, 3]);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+        formData.Add(fileContent, "Image", "test.jpg");
+        var addResponse = await _client.PostAsync("/api/admin/add", formData);
+        if (!addResponse.IsSuccessStatusCode)
         {
-            _mockItemService = new Mock<IItemService>();
-            _mockImageService = new Mock<IImageService>();
-            _mockLogger = new Mock<ILogger<ShopApiController>>();
+            var error = await addResponse.Content.ReadAsStringAsync();
+            throw new Exception($"Admin/AddItem failed: {error}");
+        }
 
-            var customFactory = factory.WithWebHostBuilder(builder =>
+        // Act
+        var response = await _client.GetAsync("/api/shop/items");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var items = await response.Content.ReadFromJsonAsync<List<ShopItemViewModel>>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(items);
+        Assert.True(items.Count > 0, "The list of items should not be empty.");
+        Assert.Contains(items, item => item.Name == uniqueItemName);
+    }
+
+    [Fact]
+    public async Task GetItems_WhenServiceThrows_ReturnsInternalServerError()
+    {
+        // Arrange
+        var factoryWithFaultyService = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services =>
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IItemService));
+                if (descriptor is not null)
                 {
-                    services.AddSingleton(_mockItemService.Object);
-                    services.AddSingleton(_mockImageService.Object);
-                    services.AddSingleton(_mockLogger.Object);
-                });
+                    services.Remove(descriptor);
+                }
+                services.AddScoped<IItemService, FaultyItemService>();
             });
+        });
+        var client = factoryWithFaultyService.CreateClient();
 
-            _client = customFactory.CreateClient();
-        }
+        // Act
+        var response = await client.GetAsync("/api/shop/items");
 
-        [Fact]
-        public async Task GetItems_ReturnsItemsSuccessfully()
-        {
-            // Arrange
-            var items = new List<ShopItem>
-            {
-                new ShopItem { Id = 1, Name = "Laptop", Price = 1500.00m, Description = "Gaming Laptop", Category = "Electronics", ImagePath = "laptop.jpg" },
-                new ShopItem { Id = 2, Name = "Smartphone", Price = 800.00m, Description = "Flagship phone", Category = "Electronics", ImagePath = "phone.jpg" }
-            };
-            
-            _mockItemService.Setup(s => s.GetAllItems()).ReturnsAsync(items);
-            _mockImageService.Setup(s => s.GetImageUri(It.IsAny<string>())).Returns<string>(img => $"https://cdn.eshop.com/{img}");
-
-            // Act
-            var response = await _client.GetAsync("api/shop/items");
-
-            // Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var responseString = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<List<ShopItemViewModel>>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.Equal("Laptop", result[0].Name);
-            Assert.Equal("https://cdn.eshop.com/laptop.jpg", result[0].ImageUri);
-        }
-
-        [Fact]
-        public async Task GetItems_Returns500_WhenServiceFails()
-        {
-            // Arrange
-            _mockItemService.Setup(s => s.GetAllItems()).ThrowsAsync(new Exception("Database failure"));
-
-            // Act
-            var response = await _client.GetAsync("api/shop/items");
-
-            // Assert
-            Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-            var responseString = await response.Content.ReadAsStringAsync();
-            
-            Assert.Contains("error", responseString);
-            
-            _mockLogger.Verify(
-                x => x.Log(
-                    It.Is<LogLevel>(l => l == LogLevel.Error),
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error fetching items for the shop.")),
-                    It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
-                Times.Once);
-        }
+        // Assert
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(errorResponse);
+        Assert.Contains("error", errorResponse.Error, StringComparison.OrdinalIgnoreCase);
     }
 }

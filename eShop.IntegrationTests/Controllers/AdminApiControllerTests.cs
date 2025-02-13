@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using eShop.Data;
+using eShop.Models.Domain;
+using eShop.Services.Interfaces;
+using IntegrationTests.Fakes;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,51 +40,63 @@ public class AdminControllerIntegrationTests(CustomWebApplicationFactory factory
 
         Assert.NotNull(item);
         Assert.False(string.IsNullOrWhiteSpace(item.ImagePath), "Image path should not be null or empty");
-        
         Assert.Matches(@"^[\w\d-]+\.jpg$", item.ImagePath);
     }
 
     [Fact]
     public async Task AddItem_InvalidModel_ReturnsBadRequest()
     {
-        // This test requires Azurite to be running for Blob Storage emulation.
-        // If Azurite is not running, the test will fail with a 500 Internal Server Error.
-        // If Azurite is running, the test will fail with a 400 Bad Request.
-        
+        // Arrange
         var content = new MultipartFormDataContent();
         content.Add(new StringContent(""), "Name");
         content.Add(new StringContent("0"), "Price");
         content.Add(new StringContent(""), "Category");
+
+        // Act
         var response = await _client.PostAsync("/api/admin/add", content);
+
+        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    /*
     [Fact]
-    public async Task AddItem_AzuriteUnavailable_ReturnsServiceUnavailable()
+    public async Task AddItem_WhenBlobServiceThrows_ReturnsInternalServerError()
     {
-        //    The unit test "AddItem_ExceptionThrown_ReturnsInternalServerError" ensures that:
-        //    1. The controller correctly catches exceptions.
-        //    2. A proper 500 Internal Server Error response is returned.
-        //    3. Logging works as expected.
-        //    If we still want to test Azurite failures, we should stop Azurite before running this test.
-
         // Arrange
+        var factoryWithFaultyBlob = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IBlobStorageService));
+                if (descriptor is not null)
+                {
+                    services.Remove(descriptor);
+                }
+                services.AddScoped<IBlobStorageService, FaultyBlobStorageService>();
+            });
+        });
+
+        var client = factoryWithFaultyBlob.CreateClient();
+
         var content = new MultipartFormDataContent();
         content.Add(new StringContent("ErrorItem"), "Name");
         content.Add(new StringContent("99,99"), "Price");
         content.Add(new StringContent("ErrorCategory"), "Category");
 
-        var fileContent = new ByteArrayContent(new byte[] { 1, 2, 3 });
+        var fileContent = new ByteArrayContent([1, 2, 3]);
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
-        content.Add(fileContent, "Image", "test.jpg");
+        content.Add(fileContent, "Image", "error.jpg");
 
         // Act
-        var response = await _client.PostAsync("/api/Admin/AddItem", content);
+        var response = await client.PostAsync("/api/admin/add", content);
 
         // Assert
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        
+        var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(errorResponse);
+        Assert.Contains("error", errorResponse.Error, StringComparison.OrdinalIgnoreCase);
     }
-    */
 }
 
