@@ -24,41 +24,24 @@ public class ItemService(ApplicationDbContext context, ILogger<ItemService> logg
             return cachedItems;
         }
 
-        try
-        {
-            _logger.LogInformation("Fetching all items from the database.");
-            var items = await _context.ShopItems.AsNoTracking().ToListAsync();
+        _logger.LogInformation("Fetching all items from the database.");
+        var items = await _context.ShopItems.AsNoTracking().ToListAsync();
 
+        _cache.Set(cacheKey, items, _cacheDuration);
 
-            _cache.Set(cacheKey, items, _cacheDuration);
-
-            return items;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while fetching items.");
-            throw;
-        }
+        return items;
     }
 
     public async Task AddItem(ShopItem item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
-        try
-        {
-            _logger.LogInformation("Adding a new item: {@Item}", item);
-            await _context.ShopItems.AddAsync(item);
-            await _context.SaveChangesAsync();
-            
-            _cache.Remove("all_shop_items");
+        _logger.LogInformation("Adding a new item: {@Item}", item);
+        await _context.ShopItems.AddAsync(item);
+        await _context.SaveChangesAsync();
+        
+        _cache.Remove("all_shop_items");
 
-            _logger.LogInformation("Successfully added item: {@Item}", item);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while adding item: {@Item}", item);
-            throw;
-        }
+        _logger.LogInformation("Successfully added item: {@Item}", item);
     }
 }

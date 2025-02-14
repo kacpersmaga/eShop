@@ -18,17 +18,16 @@ public class ImageService(IBlobStorageService blobStorageService, ILogger<ImageS
             return "/images/default.jpg";
         }
 
+        if (_cache.TryGetValue(imagePath, out string? cachedUri) && cachedUri is not null)
+        {
+            _logger.LogInformation("Cache hit for imagePath: {ImagePath}", imagePath);
+            return cachedUri;
+        }
+
+        _logger.LogInformation("Cache miss for imagePath: {ImagePath}. Generating new URI.", imagePath);
         try
         {
-            if (_cache.TryGetValue(imagePath, out string? cachedUri) && cachedUri is not null)
-            {
-                _logger.LogInformation("Cache hit for imagePath: {ImagePath}", imagePath);
-                return cachedUri;
-            }
-            
-            _logger.LogInformation("Cache miss for imagePath: {ImagePath}. Generating new URI.", imagePath);
             string imageUri = _blobStorageService.GetBlobSasUri(imagePath);
-            
             _cache.Set(imagePath, imageUri, TimeSpan.FromMinutes(10));
             _logger.LogInformation("Image URI cached for imagePath: {ImagePath}", imagePath);
 

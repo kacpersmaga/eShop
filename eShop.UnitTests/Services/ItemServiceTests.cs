@@ -112,26 +112,14 @@ public class ItemServiceUnitTests
     }
 
     [Fact]
-    public async Task AddItem_ShouldLogErrorWhenExceptionOccurs()
+    public async Task AddItem_ShouldThrowException_WhenServiceFails()
     {
         // Arrange
         var newItem = new ShopItem { Id = 3, Name = "ErrorItem", Price = 40.0m, Category = "ErrorCategory" };
-
-        // Simulate DB failure by disposing context
+    
         await _context.DisposeAsync();
 
         // Act & Assert
         await Assert.ThrowsAsync<ObjectDisposedException>(() => _itemService.AddItem(newItem));
-
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("An error occurred while adding item")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()
-            ),
-            Times.Once
-        );
     }
 }
