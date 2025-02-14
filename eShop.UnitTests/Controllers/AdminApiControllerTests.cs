@@ -129,9 +129,9 @@ public class AdminApiControllerTests
         _blobServiceMock.Verify(x => x.UploadFileAsync(It.IsAny<IFormFile>()), Times.Never);
         _itemServiceMock.Verify(x => x.AddItem(It.IsAny<ShopItem>()), Times.Never);
     }
-
+    
     [Fact]
-    public async Task AddItem_ExceptionThrown_ReturnsInternalServerErrorWithErrorResponse()
+    public async Task AddItem_ExceptionThrown_ThrowsException()
     {
         // Arrange
         var formModel = new ShopItemFormModel
@@ -145,15 +145,8 @@ public class AdminApiControllerTests
             .Setup(s => s.AddItem(It.IsAny<ShopItem>()))
             .ThrowsAsync(new Exception("Test exception"));
 
-        // Act
-        var result = await _apiController.AddItem(formModel, null);
-
-        // Assert
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, objectResult.StatusCode);
-
-        var errorResponse = Assert.IsType<ErrorResponse>(objectResult.Value);
-        Assert.Equal("An error occurred. Please try again later.", errorResponse.Error);
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() => _apiController.AddItem(formModel, null));
     }
 }
 

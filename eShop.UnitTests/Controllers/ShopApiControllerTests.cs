@@ -35,7 +35,7 @@ public class ShopApiControllerTests
 
         _mapper = config.CreateMapper();
 
-        _controller = new ShopApiController(_mockItemService.Object, _mapper, _mockLogger.Object);
+        _controller = new ShopApiController(_mockItemService.Object, _mapper);
     }
 
     [Fact]
@@ -81,41 +81,31 @@ public class ShopApiControllerTests
     }
 
     [Fact]
-    public async Task GetItems_ReturnsInternalServerError_WhenExceptionIsThrown()
-    {
-        // Arrange
-        _mockItemService.Setup(service => service.GetAllItems()).ThrowsAsync(new Exception("Database error"));
-
-        // Act
-        var result = await _controller.GetItems();
-
-        // Assert
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, objectResult.StatusCode);
-
-        var errorResponse = Assert.IsType<ErrorResponse>(objectResult.Value);
-        Assert.Equal("An error occurred while retrieving shop items.", errorResponse.Error);
-    }
-
-    [Fact]
     public void ControllerConstructor_ThrowsArgumentNullException_WhenItemServiceIsNull()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ShopApiController(null!, _mapper, _mockLogger.Object));
+        Assert.Throws<ArgumentNullException>(() => new ShopApiController(null!, _mapper));
     }
 
     [Fact]
     public void ControllerConstructor_ThrowsArgumentNullException_WhenMapperIsNull()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ShopApiController(_mockItemService.Object, null!, _mockLogger.Object));
+        Assert.Throws<ArgumentNullException>(() => new ShopApiController(_mockItemService.Object, null!));
+    }
+    
+    [Fact]
+    public async Task GetItems_ExceptionThrown_ThrowsException()
+    {
+        // Arrange
+        _mockItemService
+            .Setup(service => service.GetAllItems())
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() => _controller.GetItems());
     }
 
-    [Fact]
-    public void ControllerConstructor_ThrowsArgumentNullException_WhenLoggerIsNull()
-    {
-        // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ShopApiController(_mockItemService.Object, _mapper, null!));
-    }
+
 }
 

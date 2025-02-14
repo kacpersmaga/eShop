@@ -24,36 +24,23 @@ public class AdminApiController(
             return BadRequest(ModelState);
         }
 
-        try
+        string? uploadedPath = null;
+        if (image is { Length: > 0 })
         {
-            string? uploadedPath = null;
-            if (image is { Length: > 0 })
-            {
-                uploadedPath = await blobService.UploadFileAsync(image);
-            }
-
-            var shopItem = mapper.Map<ShopItem>(model);
-            shopItem.ImagePath = uploadedPath;
-
-            await itemService.AddItem(shopItem);
-
-            logger.LogInformation("Item '{Name}' added successfully.", model.Name);
-
-            var successResponse = new SuccessResponse
-            {
-                Message = $"Item '{model.Name}' added successfully!"
-            };
-            return Ok(successResponse);
+            uploadedPath = await blobService.UploadFileAsync(image);
         }
-        catch (Exception ex)
+
+        var shopItem = mapper.Map<ShopItem>(model);
+        shopItem.ImagePath = uploadedPath;
+
+        await itemService.AddItem(shopItem);
+
+        logger.LogInformation("Item '{Name}' added successfully.", model.Name);
+
+        var successResponse = new SuccessResponse
         {
-            logger.LogError(ex, "Error while adding item '{Name}'. Returning 500.", model.Name);
-            var errorResponse = new ErrorResponse
-            {
-                Error = "An error occurred. Please try again later."
-            };
-            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
-        }
+            Message = $"Item '{model.Name}' added successfully!"
+        };
+        return Ok(successResponse);
     }
 }
-

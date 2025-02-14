@@ -60,13 +60,6 @@ try
     // Add middleware to handle exceptions
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-    // Configure middleware
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseExceptionHandler("/Home/Error");
-        app.UseHsts();
-    }
-
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();

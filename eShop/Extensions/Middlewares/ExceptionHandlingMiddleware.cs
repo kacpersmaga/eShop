@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using eShop.Models.Domain;
 
 namespace eShop.Extensions.Middlewares;
 
@@ -18,7 +19,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var response = new { error = "An unexpected error occurred. Please try again later." };
+            var response = new ErrorResponse 
+            { 
+                Error = "An unexpected error occurred. Please try again later."
+            };
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }
     }
