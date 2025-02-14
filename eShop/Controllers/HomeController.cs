@@ -1,13 +1,9 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using eShop.Models.Dtos;
 
 namespace eShop.Controllers;
 
-public class HomeController(ILogger<HomeController> logger) : Controller
+public class HomeController() : Controller
 {
-    private readonly ILogger<HomeController> _logger = logger;
-
     public IActionResult Index()
     {
         return View();
