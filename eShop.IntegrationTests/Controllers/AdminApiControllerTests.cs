@@ -23,14 +23,11 @@ public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicatio
         _factory = factory;
         _client = _factory.CreateClient();
     }
-
-    // Called before each test runs.
     public async Task InitializeAsync()
     {
         await CleanDatabaseAsync();
     }
-
-    // Called after each test runs.
+    
     public async Task DisposeAsync()
     {
         await CleanDatabaseAsync();
