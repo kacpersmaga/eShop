@@ -1,10 +1,9 @@
-
 using eShop.Models.Dtos;
 using eShop.Validators.Dtos;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 
-namespace UnitTests.Models;
+namespace UnitTests.Validators.Dtos;
 
 public class ShopItemFormModelValidatorTests
 {

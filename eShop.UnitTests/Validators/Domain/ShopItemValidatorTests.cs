@@ -2,7 +2,7 @@ using eShop.Models.Domain;
 using eShop.Validators.Domain;
 using FluentValidation.Results;
 
-namespace UnitTests.Validators;
+namespace UnitTests.Validators.Domain;
 
 public class ShopItemValidatorTests
 {
