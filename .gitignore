@@ -1,6 +1,6 @@
 # Ignore build output folders
-/eShop/bin/
-/eShop/obj/
+**/bin/
+**/obj/
 
 # Rider IDE specific files
 /.idea/
