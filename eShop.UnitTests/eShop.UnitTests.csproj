@@ -35,6 +35,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\eShop\eShop.csproj" />
+      <ProjectReference Include="..\eShop.SharedTestUtilities\eShop.SharedTestUtilities.csproj" />
     </ItemGroup>
 
 </Project>

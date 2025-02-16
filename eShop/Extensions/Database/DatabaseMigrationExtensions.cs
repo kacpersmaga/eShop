@@ -11,18 +11,8 @@ public static class DatabaseMigrationExtensions
         var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("DatabaseMigration");
 
-        try
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            dbContext.Database.Migrate();
-            logger.LogInformation("Migrations applied successfully.");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while applying database migrations.");
-            throw;
-        }
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        dbContext.Database.Migrate();
+        logger.LogInformation("Migrations applied successfully.");
     }
-
-
 }
