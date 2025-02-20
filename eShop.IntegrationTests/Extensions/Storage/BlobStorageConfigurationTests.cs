@@ -3,7 +3,7 @@ using eShop.Services.Interfaces;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace IntegrationTests.Storage;
+namespace IntegrationTests.Extensions.Storage;
 
 public class BlobStorageConfigurationTests(CustomWebApplicationFactory factory)
     : IClassFixture<CustomWebApplicationFactory>

@@ -1,4 +1,3 @@
-
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -9,11 +8,10 @@ using eShop.Services.Interfaces;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using IntegrationTests.Fakes;
-using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationTests.Controllers;
 
-public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private readonly CustomWebApplicationFactory _factory;
@@ -22,22 +20,6 @@ public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicatio
     {
         _factory = factory;
         _client = _factory.CreateClient();
-    }
-    public async Task InitializeAsync()
-    {
-        await CleanDatabaseAsync();
-    }
-    
-    public async Task DisposeAsync()
-    {
-        await CleanDatabaseAsync();
-    }
-
-    private async Task CleanDatabaseAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await context.ShopItems.ExecuteDeleteAsync();
     }
 
     [Fact]

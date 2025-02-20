@@ -36,7 +36,6 @@ public class ExceptionHandlingMiddlewareIntegrationTests : IClassFixture<CustomW
 
         // Assert
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-
         var responseContent = await response.Content.ReadAsStringAsync();
         Assert.Contains("An unexpected error occurred", responseContent);
     }

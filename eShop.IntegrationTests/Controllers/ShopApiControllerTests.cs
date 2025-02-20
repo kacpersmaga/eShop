@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationTests.Controllers;
 
-public class ShopApiIntegrationTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class ShopApiIntegrationTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
     private readonly CustomWebApplicationFactory _factory;
@@ -23,23 +23,6 @@ public class ShopApiIntegrationTests : IClassFixture<CustomWebApplicationFactory
     {
         _factory = factory;
         _client = _factory.CreateClient();
-    }
-    
-    public async Task InitializeAsync()
-    {
-        await CleanDatabaseAsync();
-    }
-    
-    public async Task DisposeAsync()
-    {
-        await CleanDatabaseAsync();
-    }
-
-    private async Task CleanDatabaseAsync()
-    {
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await context.ShopItems.ExecuteDeleteAsync();
     }
 
     [Fact]
