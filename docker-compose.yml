@@ -36,7 +36,8 @@
       - app-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=DockerConnection
+      - ConnectionStrings__DefaultConnection=Server=db;Database=eShopDB;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - AzureBlobStorage__ConnectionString=UseDevelopmentStorage=true
 
 networks:
   app-network:
@@ -44,4 +45,3 @@ networks:
 
 volumes:
   mssql-data:
-

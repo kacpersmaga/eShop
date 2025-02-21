@@ -11,7 +11,7 @@ public static class DatabaseConfiguration
         IWebHostEnvironment env)
     {
         var connectionStringName = env.IsEnvironment("Test") ? "TestConnection" 
-            : configuration["DB_CONNECTION"] ?? "DefaultConnection";
+            : "DefaultConnection";
 
         var connectionString = configuration.GetConnectionString(connectionStringName)
                                ?? throw new InvalidOperationException("Database connection string is not configured.");
