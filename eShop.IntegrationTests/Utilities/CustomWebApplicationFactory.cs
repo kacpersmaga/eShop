@@ -11,60 +11,66 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.Azurite;
 using Testcontainers.MsSql;
 
-namespace IntegrationTests.Utilities;
-
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+namespace IntegrationTests.Utilities
 {
-    private static readonly MsSqlContainer DbContainer = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2019-latest")
-        .WithPassword("YourStrong!Passw0rd")
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
-        .Build();
-
-    private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
-        .WithCommand("--skipApiVersionCheck")
-        .Build();
-
-    private static BlobServiceClient? _sharedBlobServiceClient;
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
-        builder.UseEnvironment("Test");
+        private static readonly MsSqlContainer DbContainer = new MsSqlBuilder()
+            .WithImage("mcr.microsoft.com/mssql/server:2019-latest")
+            .WithPassword("YourStrong!Passw0rd")
+            .WithPortBinding(11433, 1433)
+            .WithWaitStrategy(Wait.ForUnixContainer()
+            )
+            .Build();
+        
+        private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
+            .WithCommand("--skipApiVersionCheck")
+            .WithPortBinding(10000, 10000)
+            .WithPortBinding(10001, 10001)
+            .WithPortBinding(10002, 10002)
+            .Build();
 
-        builder.ConfigureTestServices(services =>
+        private static BlobServiceClient? _sharedBlobServiceClient;
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(DbContainer.GetConnectionString()));
-            
-            services.RemoveAll<BlobServiceClient>();
-            
-            services.AddSingleton<BlobServiceClient>(_ =>
+            builder.UseEnvironment("Test");
+
+            builder.ConfigureTestServices(services =>
             {
-                return _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(DbContainer.GetConnectionString()));
+                
+                services.RemoveAll<BlobServiceClient>();
+                
+                services.AddSingleton<BlobServiceClient>(_ =>
+                {
+                    return _sharedBlobServiceClient ??=
+                        new BlobServiceClient(AzuriteContainer.GetConnectionString());
+                });
             });
-        });
+        }
+
+        public async Task InitializeAsync()
+        {
+            await DbContainer.StartAsync();
+            await AzuriteContainer.StartAsync();
+            
+            _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
+            
+            using var scope = Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await context.Database.MigrateAsync();
+            
+            var blobClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
+            var imagesContainer = blobClient.GetBlobContainerClient("images");
+            await imagesContainer.CreateIfNotExistsAsync();
+        }
+
+        public async Task DisposeAsync()
+        {
+            await DbContainer.StopAsync();
+            await AzuriteContainer.StopAsync();
+        }
     }
-
-    public async Task InitializeAsync()
-    {
-        await DbContainer.StartAsync();
-        await AzuriteContainer.StartAsync();
-
-        _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
-
-        using var scope = Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await context.Database.MigrateAsync();
-
-        var blobClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
-        var imagesContainer = blobClient.GetBlobContainerClient("images");
-        await imagesContainer.CreateIfNotExistsAsync();
-    }
-
-    async Task IAsyncLifetime.DisposeAsync()
-    {
-        await DbContainer.StopAsync();
-        await AzuriteContainer.StopAsync();
-    }
-    
 }
