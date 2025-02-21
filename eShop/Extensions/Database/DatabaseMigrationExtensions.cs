@@ -7,11 +7,6 @@ public static class DatabaseMigrationExtensions
 {
     public static void ApplyDatabaseMigrations(this IApplicationBuilder app)
     {
-        if (app.ApplicationServices.GetRequiredService<IWebHostEnvironment>().IsEnvironment("Test"))
-        {
-            return;
-        }
-        
         using var scope = app.ApplicationServices.CreateScope();
         var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("DatabaseMigration");
