@@ -20,8 +20,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     private static readonly MsSqlContainer DbContainer = new MsSqlBuilder()
         .WithImage("mcr.microsoft.com/mssql/server:2019-latest")
         .WithPassword("YourStrong!Passw0rd")
-        .WithPortBinding(1433, true)
-        .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
         .Build();
 
     private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
