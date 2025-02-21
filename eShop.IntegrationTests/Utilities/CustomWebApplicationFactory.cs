@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.Azurite;
 using Testcontainers.MsSql;
 
@@ -34,7 +35,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(DbContainer.GetConnectionString()));
-
+            
+            services.RemoveAll<BlobServiceClient>();
+            
             services.AddSingleton<BlobServiceClient>(_ =>
             {
                 return _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
