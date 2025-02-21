@@ -34,7 +34,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(DbContainer.GetConnectionString()));
-            
+
             services.AddSingleton<BlobServiceClient>(_ =>
             {
                 return _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
@@ -46,21 +46,22 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         await DbContainer.StartAsync();
         await AzuriteContainer.StartAsync();
-        
+
         _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
-        
+
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await context.Database.MigrateAsync();
-        
+
         var blobClient = scope.ServiceProvider.GetRequiredService<BlobServiceClient>();
         var imagesContainer = blobClient.GetBlobContainerClient("images");
         await imagesContainer.CreateIfNotExistsAsync();
     }
 
-    public async Task DisposeAsync()
+    async Task IAsyncLifetime.DisposeAsync()
     {
         await DbContainer.StopAsync();
         await AzuriteContainer.StopAsync();
     }
+    
 }
