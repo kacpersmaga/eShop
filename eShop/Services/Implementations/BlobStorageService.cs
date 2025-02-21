@@ -13,11 +13,11 @@ public class BlobStorageService : IBlobStorageService
     {
         _blobWrapper = blobWrapper ?? throw new ArgumentNullException(nameof(blobWrapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+    
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration));
         
-        _containerName = configuration["AzureBlobStorage:ContainerName"] ?? throw new ArgumentNullException(nameof(configuration));
+        _containerName = configuration["AzureBlobStorage:ContainerName"] ?? "images";
     }
 
     public async Task<string> UploadFileAsync(IFormFile file)
