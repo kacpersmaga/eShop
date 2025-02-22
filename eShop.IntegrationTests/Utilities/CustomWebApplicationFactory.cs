@@ -24,7 +24,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
         .WithCommand("--skipApiVersionCheck")
-        .WithPortBinding(10000, 10000)
         .Build();
     private static BlobServiceClient? _sharedBlobServiceClient;
 
