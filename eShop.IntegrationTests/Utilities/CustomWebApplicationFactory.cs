@@ -63,17 +63,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         await imagesContainer.CreateIfNotExistsAsync();
     }
 
-    public new async Task DisposeAsync()
+    public new Task DisposeAsync()
     {
-        await base.DisposeAsync();
-        
-        if (_blobServiceClient != null)
-        {
-            _blobServiceClient = null;
-        }
-        
-        await _azuriteContainer.StopAsync();
-        await _dbContainer.StopAsync();
+        return Task.CompletedTask; // Containers doesn't need disposing, as it doesn't cause conflicts and it speeds up testing
     }
 }
 
