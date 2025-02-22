@@ -65,5 +65,44 @@ public class AdminControllerIntegrationTests : IClassFixture<CustomWebApplicatio
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-    
+
+    [Fact]
+    public async Task AddItem_WhenBlobServiceThrows_ReturnsInternalServerError()
+    {
+        // Arrange
+        var factoryWithFaultyBlob = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IBlobStorageService));
+                if (descriptor is not null)
+                {
+                    services.Remove(descriptor);
+                }
+                services.AddScoped<IBlobStorageService, FaultyBlobStorageService>();
+            });
+        });
+
+        var client = factoryWithFaultyBlob.CreateClient();
+
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("ErrorItem"), "Name");
+        content.Add(new StringContent("99,99"), "Price");
+        content.Add(new StringContent("ErrorCategory"), "Category");
+
+        var fileContent = new ByteArrayContent([1, 2, 3]);
+        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
+        content.Add(fileContent, "Image", "error.jpg");
+
+        // Act
+        var response = await client.PostAsync("/api/admin/add", content);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(errorResponse);
+        Assert.Contains("error", errorResponse.Error, StringComparison.OrdinalIgnoreCase);
+    }
 }

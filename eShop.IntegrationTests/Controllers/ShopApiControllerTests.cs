@@ -56,5 +56,33 @@ public class ShopApiIntegrationTests : IClassFixture<CustomWebApplicationFactory
         Assert.True(items.Count > 0, "The list of items should not be empty.");
         Assert.Contains(items, item => item.Name == uniqueItemName);
     }
-    
+
+    [Fact]
+    public async Task GetItems_WhenServiceThrows_ReturnsInternalServerError()
+    {
+        // Arrange
+        var factoryWithFaultyService = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IItemService));
+                if (descriptor is not null)
+                {
+                    services.Remove(descriptor);
+                }
+                services.AddScoped<IItemService, FaultyItemService>();
+            });
+        });
+        var client = factoryWithFaultyService.CreateClient();
+
+        // Act
+        var response = await client.GetAsync("/api/shop/items");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        Assert.NotNull(errorResponse);
+        Assert.Contains("error", errorResponse.Error, StringComparison.OrdinalIgnoreCase);
+    }
 }
