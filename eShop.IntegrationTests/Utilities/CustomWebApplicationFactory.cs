@@ -24,7 +24,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
         .WithCommand("--skipApiVersionCheck")
-        .WithPortBinding(10000, true)
+        .WithPortBinding(10000, 10000)
         .Build();
     private static BlobServiceClient? _sharedBlobServiceClient;
 
@@ -65,7 +65,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        await DbContainer.StopAsync();
-        await AzuriteContainer.StopAsync();
+
     }
 }
