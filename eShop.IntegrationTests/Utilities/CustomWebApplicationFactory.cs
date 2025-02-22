@@ -17,16 +17,16 @@ namespace IntegrationTests.Utilities;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private static readonly MsSqlContainer DbContainer = new MsSqlBuilder()
+    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
         .WithImage("mcr.microsoft.com/mssql/server:2019-latest")
         .WithPassword("YourStrong!Passw0rd")
         .Build();
 
-    private static readonly AzuriteContainer AzuriteContainer = new AzuriteBuilder()
+    private readonly AzuriteContainer _azuriteContainer = new AzuriteBuilder()
         .WithCommand("--skipApiVersionCheck")
         .Build();
-
-    private static BlobServiceClient? _sharedBlobServiceClient;
+        
+    private BlobServiceClient? _blobServiceClient;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -35,12 +35,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         builder.ConfigureTestServices(services =>
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(DbContainer.GetConnectionString()));
+                options.UseSqlServer(_dbContainer.GetConnectionString()));
             
             services.RemoveAll<BlobServiceClient>();
             
             services.AddSingleton<BlobServiceClient>(_ =>
-                _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString()));
+                _blobServiceClient ??= new BlobServiceClient(_azuriteContainer.GetConnectionString()));
             
             services.AddScoped<IBlobStorageService, BlobStorageService>();
             services.AddScoped<IBlobStorageServiceWrapper, BlobStorageServiceWrapper>();
@@ -49,10 +49,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     public async Task InitializeAsync()
     {
-        await DbContainer.StartAsync();
-        await AzuriteContainer.StartAsync();
+        await _dbContainer.StartAsync();
+        await _azuriteContainer.StartAsync();
 
-        _sharedBlobServiceClient ??= new BlobServiceClient(AzuriteContainer.GetConnectionString());
+        _blobServiceClient = new BlobServiceClient(_azuriteContainer.GetConnectionString());
 
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -63,10 +63,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         await imagesContainer.CreateIfNotExistsAsync();
     }
 
-    public async Task DisposeAsync()
+    public new async Task DisposeAsync()
     {
-        await DbContainer.StopAsync();
-        await AzuriteContainer.StopAsync();
+        await base.DisposeAsync();
+        
+        if (_blobServiceClient != null)
+        {
+            _blobServiceClient = null;
+        }
+        
+        await _azuriteContainer.StopAsync();
+        await _dbContainer.StopAsync();
     }
 }
 
