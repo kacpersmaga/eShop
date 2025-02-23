@@ -64,7 +64,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     public new Task DisposeAsync()
     {
-        return Task.CompletedTask; // Containers doesn't need disposing, as it doesn't cause conflicts and it speeds up testing
+        // Containers doesn't need disposing, as it doesn't cause conflicts and it speeds up testing
+        return Task.CompletedTask; 
     }
 }
 
