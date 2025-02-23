@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Unit and Integration Tests
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - '**'
 
 jobs:
-  integration-tests:
+  tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,5 +27,8 @@ jobs:
       - name: Build solution
         run: dotnet build --configuration Release --no-restore
 
+      - name: Run Unit Tests
+        run: dotnet test eShop.UnitTests/eShop.UnitTests.csproj --configuration Release --no-restore --no-build --verbosity normal
+
       - name: Run Integration Tests
-        run: dotnet test --configuration Release --no-restore --no-build --verbosity normal
+        run: dotnet test eShop.IntegrationTests/eShop.IntegrationTests.csproj --configuration Release --no-restore --no-build --verbosity normal

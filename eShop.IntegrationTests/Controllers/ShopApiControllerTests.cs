@@ -3,14 +3,12 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using eShop.Data;
 using eShop.Models.Dtos;
 using eShop.Models.Domain;
 using eShop.Services.Interfaces;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using IntegrationTests.Fakes;
-using Microsoft.EntityFrameworkCore;
 
 namespace IntegrationTests.Controllers;
 

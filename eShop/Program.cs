@@ -23,8 +23,12 @@ try
 
     // Add services to the container
     builder.Services.AddControllersWithViews();
-    builder.Services.ConfigureDatabase(builder.Configuration, builder.Environment);
-    builder.Services.ConfigureBlobStorage(builder.Configuration);
+    
+    if (!builder.Environment.IsEnvironment("Test"))
+    {
+        builder.Services.ConfigureDatabase(builder.Configuration, builder.Environment);
+        builder.Services.ConfigureBlobStorage(builder.Configuration);
+    }
 
     // Register application services with scoped lifetime
     builder.Services.AddScoped<IItemService, ItemService>();
@@ -55,7 +59,11 @@ try
     var app = builder.Build();
 
     // Apply database migrations on startup
-    app.ApplyDatabaseMigrations();
+
+    if (!builder.Environment.IsEnvironment("Test"))
+    {
+        app.ApplyDatabaseMigrations();
+    }
     
     // Add middleware to handle exceptions
     app.UseMiddleware<ExceptionHandlingMiddleware>();
