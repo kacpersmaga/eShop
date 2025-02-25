@@ -1,11 +1,17 @@
+using System.Text;
+using eShop.Data;
 using eShop.Extensions.Database;
 using eShop.Extensions.Logging;
 using eShop.Extensions.Middlewares;
 using eShop.Extensions.Storage;
+using eShop.Models.Domain;
+using eShop.Models.Settings;
 using eShop.Services.Implementations;
 using eShop.Services.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +35,36 @@ try
         builder.Services.ConfigureDatabase(builder.Configuration, builder.Environment);
         builder.Services.ConfigureBlobStorage(builder.Configuration);
     }
+    
+    // Configure Identity with IdentityDbContext
+    builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+    // Configure JWT settings
+    builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+    // Configure JWT Bearer authentication (used in API endpoints)
+    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+                      ?? throw new InvalidOperationException("JWT Settings are not configured properly.");
+    builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = "JwtBearer";
+            options.DefaultChallengeScheme = "JwtBearer";
+        })
+        .AddJwtBearer("JwtBearer", options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+            };
+        });
 
     // Register application services with scoped lifetime
     builder.Services.AddScoped<IItemService, ItemService>();
@@ -71,6 +107,8 @@ try
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();
+
+    app.UseAuthentication();
     app.UseAuthorization();
 
     // Configure endpoints

@@ -3,6 +3,7 @@ using eShop.Api;
 using eShop.Models.Domain;
 using eShop.Models.Dtos;
 using eShop.Services.Interfaces;
+using eShop.Validators.Dtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -107,29 +108,24 @@ public class AdminApiControllerTests
     }
 
     [Fact]
-    public async Task AddItem_InvalidModel_ReturnsBadRequest()
+    public void Validate_InvalidNameAndCategory_ShouldHaveErrors()
     {
         // Arrange
-        var formModel = new ShopItemFormModel
-        {
-            Name = new string('A', 101),
-            Price = 100001,
+        var validator = new ShopItemFormModelValidator();
+        var model = new ShopItemFormModel 
+        { 
+            Name = new string('A', 101), 
             Category = new string('B', 51)
         };
-
-        _apiController.ModelState.AddModelError("Name", "Name is required");
-
-        // Act
-        var result = await _apiController.AddItem(formModel, null);
-
-        // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(400, badRequestResult.StatusCode);
-
-        _blobServiceMock.Verify(x => x.UploadFileAsync(It.IsAny<IFormFile>()), Times.Never);
-        _itemServiceMock.Verify(x => x.AddItem(It.IsAny<ShopItem>()), Times.Never);
-    }
     
+        // Act
+        var result = validator.Validate(model);
+    
+        // Assert
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "Name");
+        Assert.Contains(result.Errors, e => e.PropertyName == "Category");
+    }
     [Fact]
     public async Task AddItem_ExceptionThrown_ThrowsException()
     {

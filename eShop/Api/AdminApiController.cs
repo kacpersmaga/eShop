@@ -18,12 +18,6 @@ public class AdminApiController(
     [HttpPost("add")]
     public async Task<IActionResult> AddItem([FromForm] ShopItemFormModel model, [FromForm] IFormFile? image)
     {
-        if (!ModelState.IsValid)
-        {
-            logger.LogWarning("Model state invalid for item '{Name}'. Returning 400.", model.Name);
-            return BadRequest(ModelState);
-        }
-
         string? uploadedPath = null;
         if (image is { Length: > 0 })
         {

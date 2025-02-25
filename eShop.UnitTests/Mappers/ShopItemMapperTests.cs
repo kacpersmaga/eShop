@@ -98,6 +98,6 @@ public class ShopItemMappingProfileTests
         Assert.Equal(shopItem.Price, viewModel.Price);
         Assert.Equal(shopItem.Description, viewModel.Description);
         Assert.Equal(shopItem.Category, viewModel.Category);
-        Assert.Equal("https://images.com/test-image.jpg", viewModel.ImageUri); // Verify ImageUri is resolved correctly
+        Assert.Equal("https://images.com/test-image.jpg", viewModel.ImageUri);
     }
 }

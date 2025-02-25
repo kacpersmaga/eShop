@@ -5,6 +5,8 @@
     environment:
       SA_PASSWORD: "Password123!"
       ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
     networks:
       - app-network
     volumes:
@@ -36,6 +38,10 @@
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=eShopDB;User Id=sa;Password=Password123!;TrustServerCertificate=True
       - AzureBlobStorage__ConnectionString=UseDevelopmentStorage=true
+      - JwtSettings__Secret=MyDockerDevSuperSecretKey1234567890
+      - JwtSettings__Issuer=https://localhost:8080
+      - JwtSettings__Audience=eShopAudience
+      - JwtSettings__ExpirationInMinutes=60
 
 networks:
   app-network:

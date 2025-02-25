@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login</h2>
+
+<div id="message" style="color:red; margin-bottom:10px;"></div>
+
+<form id="loginForm">
+    <div>
+        <label for="userName">User Name</label>
+        <input type="text" id="userName" name="userName" required />
+    </div>
+    <div>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+    </div>
+    <div>
+        <button type="submit">Login</button>
+    </div>
+</form>
+
+<script>
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        
+        document.getElementById("message").innerText = "";
+
+        const data = {
+            userName: document.getElementById("userName").value,
+            password: document.getElementById("password").value
+        };
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById("message").style.color = "green";
+                document.getElementById("message").innerText = "Login successful. Redirecting...";
+
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 2000);
+            } else {
+                const result = await response.json();
+                if (result.errors) {
+                    for (const [field, errors] of Object.entries(result.errors)) {
+                        document.getElementById("message").innerText += `${field}: ${errors.join(", ")} `;
+                    }
+                } else {
+                    document.getElementById("message").innerText = result.message || "Invalid login attempt.";
+                }
+            }
+        } catch (error) {
+            document.getElementById("message").innerText = "An error occurred. Please try again.";
+        }
+    });
+</script>
