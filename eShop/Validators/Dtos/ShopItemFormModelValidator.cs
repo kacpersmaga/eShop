@@ -16,7 +16,6 @@ public class ShopItemFormModelValidator : AbstractValidator<ShopItemFormModel>
             .LessThan(100000).WithMessage("Price must be less than 100,000.");
         
         RuleFor(x => x.Description)
-            .NotEmpty().WithMessage("Description is required.")
             .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
 
         RuleFor(x => x.Category)
