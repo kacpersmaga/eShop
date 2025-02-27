@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using eShop.Models.Domain;
+using eShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -168,21 +169,29 @@ public class AuthController(
     
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> Logout([FromServices] ITokenRevocationService tokenRevocationService)
     {
-        var username = User.Identity?.Name;
-        if (username != null)
+        var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+
+        if (!string.IsNullOrEmpty(jti))
         {
-            var user = await userManager.FindByNameAsync(username);
+            await tokenRevocationService.RevokeTokenByJtiAsync(jti);
+        }
+        
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var user = await userManager.FindByIdAsync(userId);
             if (user != null)
             {
                 user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddYears(-1);
                 await userManager.UpdateAsync(user);
             }
         }
         
         Response.Cookies.Delete("authToken");
-        
+
         return Ok(new { message = "Logged out successfully" });
     }
 
@@ -206,18 +215,22 @@ public class AuthController(
     {
         var userRoles = await userManager.GetRolesAsync(user);
         
+        var jti = Guid.NewGuid().ToString();
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id),
             new(ClaimTypes.Name, user.UserName!),
-            new(ClaimTypes.Email, user.Email!)
+            new(ClaimTypes.Email, user.Email!),
+            
+            new(JwtRegisteredClaimNames.Jti, jti)
         };
-        
+
         foreach (var role in userRoles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
-        
+    
         var key = Encoding.UTF8.GetBytes(_jwtSettings.Secret);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -232,9 +245,10 @@ public class AuthController(
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        
+    
         return tokenHandler.WriteToken(token);
     }
+
     
     private static string GenerateRefreshToken()
     {

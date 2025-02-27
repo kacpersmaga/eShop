@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Logout";
+}
+
+<h1>Logout</h1>
+<p>Are you sure you want to log out?</p>
+
+<button id="logoutButton">Logout</button>
+
+<script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return "";
+    }
+
+    document.getElementById('logoutButton').addEventListener('click', async () => {
+        try {
+            const xsrfToken = getCookie('XSRF-TOKEN');
+            
+            const response = await fetch('/api/Auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': xsrfToken
+                }
+            });
+
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                alert('Logout failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('An error occurred:', error);
+            alert('An error occurred during logout.');
+        }
+    });
+</script>

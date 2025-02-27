@@ -16,5 +16,11 @@ namespace eShop.Controllers
             return View();
         }
         
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            return View();
+        }
+        
     }
 }
