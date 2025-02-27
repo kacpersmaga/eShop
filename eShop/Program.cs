@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text;
 using eShop.Data;
 using eShop.Extensions.Database;
@@ -40,6 +39,17 @@ try
     // Configure rate limiting
     builder.Services.Configure<RateLimitingSettings>(builder.Configuration.GetSection("RateLimiting"));
     builder.Services.AddMemoryCache();
+    
+    // Configure CSRF protection
+    builder.Services.Configure<CsrfSettings>(builder.Configuration.GetSection("CsrfSettings"));
+    builder.Services.AddAntiforgery(options =>
+    {
+        options.HeaderName = builder.Configuration["CsrfSettings:HeaderName"] ?? "X-CSRF-TOKEN";
+        options.Cookie.Name = builder.Configuration["CsrfSettings:CookieName"] ?? "XSRF-TOKEN";
+        options.Cookie.HttpOnly = false;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    });
     
     // Configure Identity with IdentityDbContext
     builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -109,6 +119,9 @@ try
     
     // Add rate limiting middleware
     app.UseMiddleware<RateLimitingMiddleware>();
+    
+    // Add CSRF protection middleware
+    app.UseMiddleware<CsrfProtectionMiddleware>();
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
