@@ -1,13 +1,17 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
-using eShop.Models.Domain;
 using eShop.Models.Dtos;
 using eShop.Models.Settings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using eShop.Models.Domain;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace eShop.Api;
 
@@ -68,7 +72,6 @@ public class AuthController(
         return Ok(new { message = "Registration successful." });
     }
 
-
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
@@ -76,7 +79,7 @@ public class AuthController(
         {
             return BadRequest(new { errors = ModelState.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
             )});
         }
 
@@ -85,7 +88,7 @@ public class AuthController(
         {
             ModelState.AddModelError("", "Invalid login attempt.");
             return Unauthorized(new { errors = new Dictionary<string, string[]> {
-                { "auth", new[] { "Invalid login attempt." } }
+                { "auth", ["Invalid login attempt."] }
             }});
         }
 
@@ -94,39 +97,93 @@ public class AuthController(
         {
             ModelState.AddModelError("", "Invalid login attempt.");
             return Unauthorized(new { errors = new Dictionary<string, string[]> {
-                { "auth", new[] { "Invalid login attempt." } }
+                { "auth", ["Invalid login attempt."] }
             }});
         }
         
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_jwtSettings.Secret);
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity([
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName!),
-                new Claim(ClaimTypes.Email, user.Email!)
-            ]),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
-            Issuer = _jwtSettings.Issuer,
-            Audience = _jwtSettings.Audience,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwtToken = tokenHandler.WriteToken(token);
+        var accessToken = await CreateAccessToken(user);
+        var refreshToken = GenerateRefreshToken();
+        
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        await userManager.UpdateAsync(user);
         
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Expires = tokenDescriptor.Expires,
+            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
             Secure = true,
             SameSite = SameSiteMode.Strict
         };
 
-        Response.Cookies.Append("authToken", jwtToken, cookieOptions);
+        Response.Cookies.Append("authToken", accessToken, cookieOptions);
+        
+        var response = new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
+        };
 
-        return Ok(new { message = "Login successful", token = jwtToken });
+        return Ok(response);
+    }
+    
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto tokenDto)
+    {
+        if (string.IsNullOrEmpty(tokenDto.RefreshToken))
+        {
+            return BadRequest("Refresh token is required");
+        }
+        
+        var user = await userManager.Users
+            .FirstOrDefaultAsync(u => u.RefreshToken == tokenDto.RefreshToken);
+            
+        if (user == null)
+        {
+            return Unauthorized("Invalid refresh token");
+        }
+        
+        if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            return Unauthorized("Refresh token expired");
+        }
+        
+        var accessToken = await CreateAccessToken(user);
+        var refreshToken = GenerateRefreshToken();
+        
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        await userManager.UpdateAsync(user);
+        
+        var response = new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
+        };
+        
+        return Ok(response);
+    }
+    
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        var username = User.Identity?.Name;
+        if (username != null)
+        {
+            var user = await userManager.FindByNameAsync(username);
+            if (user != null)
+            {
+                user.RefreshToken = null;
+                await userManager.UpdateAsync(user);
+            }
+        }
+        
+        Response.Cookies.Delete("authToken");
+        
+        return Ok(new { message = "Logged out successfully" });
     }
 
     [HttpGet("check-email")]
@@ -142,4 +199,50 @@ public class AuthController(
         var user = await userManager.FindByNameAsync(username);
         return Ok(new { exists = user != null });
     }
+    
+    #region Helper Methods
+    
+    private async Task<string> CreateAccessToken(ApplicationUser user)
+    {
+        var userRoles = await userManager.GetRolesAsync(user);
+        
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!)
+        };
+        
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+        
+        var key = Encoding.UTF8.GetBytes(_jwtSettings.Secret);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key), 
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        
+        return tokenHandler.WriteToken(token);
+    }
+    
+    private static string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+    
+    #endregion
 }

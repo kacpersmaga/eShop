@@ -2,6 +2,7 @@ namespace eShop.Models.Dtos;
 
 public class AuthResponseDto
 {
-    public required string Token { get; set; }
-    public DateTime Expiration { get; set; }
+    public required string AccessToken { get; set; }
+    public required string RefreshToken { get; set; }
+    public DateTime AccessTokenExpiration { get; set; }
 }
