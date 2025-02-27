@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using eShop.Data;
 using eShop.Extensions.Database;
@@ -36,6 +37,10 @@ try
         builder.Services.ConfigureBlobStorage(builder.Configuration);
     }
     
+    // Configure rate limiting
+    builder.Services.Configure<RateLimitingSettings>(builder.Configuration.GetSection("RateLimiting"));
+    builder.Services.AddMemoryCache();
+    
     // Configure Identity with IdentityDbContext
     builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
         .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -43,8 +48,6 @@ try
 
     // Configure JWT settings
     builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-
-    // Configure JWT Bearer authentication (used in API endpoints)
     var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
                       ?? throw new InvalidOperationException("JWT Settings are not configured properly.");
     builder.Services.AddAuthentication(options =>
@@ -103,6 +106,9 @@ try
     
     // Add middleware to handle exceptions
     app.UseMiddleware<ExceptionHandlingMiddleware>();
+    
+    // Add rate limiting middleware
+    app.UseMiddleware<RateLimitingMiddleware>();
 
     app.UseHttpsRedirection();
     app.UseStaticFiles();
