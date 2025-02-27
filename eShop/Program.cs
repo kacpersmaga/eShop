@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using eShop.Data;
 using eShop.Extensions.Database;
@@ -9,6 +10,7 @@ using eShop.Models.Settings;
 using eShop.Services.Implementations;
 using eShop.Services.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -45,21 +47,46 @@ try
     builder.Services.AddAntiforgery(options =>
     {
         options.HeaderName = builder.Configuration["CsrfSettings:HeaderName"] ?? "X-CSRF-TOKEN";
-        options.Cookie.Name = builder.Configuration["CsrfSettings:CookieName"] ?? "XSRF-TOKEN";
         options.Cookie.HttpOnly = false;
         options.Cookie.SameSite = SameSiteMode.Strict;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+            ? CookieSecurePolicy.SameAsRequest 
+            : CookieSecurePolicy.Always;
     });
     
-    // Configure Identity with IdentityDbContext
-    builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
+        {
+            options.Password.RequiredLength = 12;
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+            
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            
+            options.User.RequireUniqueEmail = true;
+            
+            options.SignIn.RequireConfirmedEmail = false;
+            
+            options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
+        })
         .AddEntityFrameworkStores<ApplicationDbContext>()
-        .AddDefaultTokenProviders();
+        .AddDefaultTokenProviders()
+        .AddTokenProvider<AuthenticatorTokenProvider<ApplicationUser>>(TokenOptions.DefaultAuthenticatorProvider);
+
+    // Add distributed cache for token revocation
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+        options.InstanceName = "eShop_";
+    });
 
     // Configure JWT settings
     builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
     var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
                       ?? throw new InvalidOperationException("JWT Settings are not configured properly.");
+
     builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = "JwtBearer";
@@ -75,13 +102,52 @@ try
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtSettings.Issuer,
                 ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+                ClockSkew = TimeSpan.Zero,
+                RequireExpirationTime = true,
+                RequireSignedTokens = true
             };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    var revocationService = context.HttpContext.RequestServices
+                        .GetRequiredService<ITokenRevocationService>();
+                    
+                    var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+                    
+                    if (!string.IsNullOrEmpty(jti) && await revocationService.IsTokenJtiRevokedAsync(jti))
+                    {
+                        context.Fail("Token has been revoked");
+                    }
+                },
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Cookies["authToken"];
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        context.Token = token;
+                    }
+                    return Task.CompletedTask;
+                }
+                
+                
+            };
+        })
+        .AddCookie(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+            options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+            options.SlidingExpiration = true;
         });
 
     // Register application services with scoped lifetime
     builder.Services.AddScoped<IItemService, ItemService>();
     builder.Services.AddScoped<IImageService, ImageService>();
+    builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
 
     // Add AutoMapper for object-to-object mapping
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

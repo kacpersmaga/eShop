@@ -22,6 +22,16 @@
     networks:
       - app-network
 
+  redis:
+    image: redis:latest
+    container_name: eshop-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+
   eshop:
     build:
       context: .
@@ -32,11 +42,13 @@
     depends_on:
       - db
       - azurite
+      - redis
     networks:
       - app-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=eShopDB;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - ConnectionStrings__Redis=redis:6379
       - AzureBlobStorage__ConnectionString=UseDevelopmentStorage=true
       - JwtSettings__Secret=MyDockerDevSuperSecretKey1234567890
       - JwtSettings__Issuer=https://localhost:8080
@@ -49,3 +61,4 @@ networks:
 
 volumes:
   mssql-data:
+  redis-data:
