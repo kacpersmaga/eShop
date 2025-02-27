@@ -4,8 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace eShop.Extensions.Middlewares;
 
-public class CsrfProtectionMiddleware(
-    RequestDelegate next,
+public class CsrfProtectionMiddleware(RequestDelegate next,
     IAntiforgery antiforgery,
     IOptions<CsrfSettings> settings,
     ILogger<CsrfProtectionMiddleware> logger)
@@ -28,23 +27,20 @@ public class CsrfProtectionMiddleware(
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Strict,
-                        Secure = !context.Request.IsHttps ? false : true,
+                        Secure = context.Request.IsHttps,
                         Path = "/"
-                    });
+                    }
+                );
             }
         }
-
-        else if (context.Request.Method != "GET" && 
-                context.Request.Method != "HEAD" && 
-                context.Request.Method != "OPTIONS" &&
-                context.Request.Method != "TRACE")
+        else if (context.Request.Method != "GET" &&
+                 context.Request.Method != "HEAD" &&
+                 context.Request.Method != "OPTIONS" &&
+                 context.Request.Method != "TRACE")
         {
             try
             {
-                if (!context.Request.Path.StartsWithSegments("/api/auth/refresh-token"))
-                {
-                    await antiforgery.ValidateRequestAsync(context);
-                }
+                await antiforgery.ValidateRequestAsync(context);
             }
             catch (AntiforgeryValidationException ex)
             {
@@ -54,7 +50,7 @@ public class CsrfProtectionMiddleware(
                 return;
             }
         }
-
+        
         await next(context);
     }
 }

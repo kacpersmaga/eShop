@@ -33,6 +33,15 @@
 </form>
 
 <script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return "";
+    }
+
     document.getElementById("registerForm").addEventListener("submit", async function(e) {
         e.preventDefault();
         
@@ -45,18 +54,27 @@
             password: document.getElementById("password").value,
             confirmPassword: document.getElementById("confirmPassword").value
         };
+        
+        const xsrfToken = getCookie('XSRF-TOKEN');
 
         try {
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': xsrfToken
+                },
+                credentials: 'include',
                 body: JSON.stringify(data)
             });
+
             const result = await response.json();
 
             if (response.ok) {
                 document.getElementById("message").style.color = "green";
-                document.getElementById("message").innerText = "Registration successful. Redirecting to login...";
+                document.getElementById("message").innerText =
+                    "Registration successful. Redirecting to login...";
+
                 setTimeout(() => {
                     window.location.href = "/Account/Login";
                 }, 2000);
@@ -67,15 +85,18 @@
                         if (errorElement) {
                             errorElement.innerText = errors.join(", ");
                         } else {
-                            document.getElementById("message").innerText += `${field}: ${errors.join(", ")} `;
+                            document.getElementById("message").innerText +=
+                                `${field}: ${errors.join(", ")} `;
                         }
                     }
                 } else {
-                    document.getElementById("message").innerText = result.message || "Registration failed. Please check your input.";
+                    document.getElementById("message").innerText =
+                        result.message || "Registration failed. Please check your input.";
                 }
             }
         } catch (error) {
-            document.getElementById("message").innerText = "An error occurred. Please try again.";
+            document.getElementById("message").innerText =
+                "An error occurred. Please try again.";
         }
     });
 </script>
