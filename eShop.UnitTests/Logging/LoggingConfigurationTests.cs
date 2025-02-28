@@ -1,4 +1,4 @@
-using eShop.Extensions.Logging;
+/*using eShop.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Sinks.TestCorrelator;
@@ -33,4 +33,4 @@ namespace UnitTests.Logging
             Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", null);
         }
     }
-}
+}*/

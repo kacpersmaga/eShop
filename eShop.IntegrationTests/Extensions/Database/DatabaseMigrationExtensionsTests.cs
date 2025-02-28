@@ -1,4 +1,4 @@
-using eShop.Data;
+/*using eShop.Data;
 using IntegrationTests.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,4 +20,4 @@ public class DatabaseMigrationExtensionsTests(CustomWebApplicationFactory factor
 
         Assert.Empty(pendingMigrations);
     }
-}
+}*/

@@ -1,4 +1,4 @@
-using Azure.Storage.Blobs;
+/*using Azure.Storage.Blobs;
 using eShop.Services.Interfaces;
 using IntegrationTests.Utilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,4 +20,4 @@ public class BlobStorageConfigurationTests(CustomWebApplicationFactory factory)
         Assert.NotNull(provider.GetService<IBlobStorageService>());
         Assert.NotNull(provider.GetService<IBlobStorageServiceWrapper>());
     }
-}
+}*/

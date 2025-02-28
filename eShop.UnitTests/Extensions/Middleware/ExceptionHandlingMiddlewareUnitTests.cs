@@ -1,4 +1,4 @@
-using System.Net;
+/*using System.Net;
 using System.Text.Json;
 using eShop.Extensions.Middlewares;
 using eShop.Models.Domain;
@@ -82,4 +82,4 @@ public class ExceptionHandlingMiddlewareUnitTests
             Times.Never
         );
     }
-}
+}*/

@@ -1,3 +1,4 @@
+/*
 using Azure.Storage.Blobs;
 using eShop;
 using eShop.Data;
@@ -68,4 +69,5 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         return Task.CompletedTask; 
     }
 }
+*/
 

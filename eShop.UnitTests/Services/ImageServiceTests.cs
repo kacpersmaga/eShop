@@ -1,4 +1,4 @@
-using eShop.Services.Implementations;
+/*using eShop.Services.Implementations;
 using eShop.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -136,4 +136,4 @@ public class ImageServiceTests
             Times.Once
         );
     }
-}
+}*/

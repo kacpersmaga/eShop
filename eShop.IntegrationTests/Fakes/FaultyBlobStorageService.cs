@@ -1,4 +1,4 @@
-using eShop.Services.Interfaces;
+/*using eShop.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 
 namespace IntegrationTests.Fakes;
@@ -14,4 +14,4 @@ public class FaultyBlobStorageService : IBlobStorageService
     {
         throw new Exception("Simulated exception in FaultyBlobStorageService for GetBlobSasUri.");
     }
-}
+}*/

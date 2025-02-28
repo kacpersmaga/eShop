@@ -1,4 +1,4 @@
-using eShop.Services.Interfaces;
+/*using eShop.Services.Interfaces;
 
 namespace UnitTests.Fakes;
 
@@ -8,4 +8,4 @@ public class FakeImageService : IImageService
     {
         return $"https://images.com/{imagePath}";
     }
-}
+}*/
