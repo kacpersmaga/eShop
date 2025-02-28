@@ -1,14 +1,17 @@
+using Microsoft.Extensions.Caching.Distributed;
 using eShop.Services.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace eShop.Services.Implementations;
 
-public class ImageService(IBlobStorageService blobStorageService, ILogger<ImageService> logger, IMemoryCache cache)
+public class ImageService(
+    IBlobStorageService blobStorageService,
+    ILogger<ImageService> logger,
+    IDistributedCache cache)
     : IImageService
 {
     private readonly IBlobStorageService _blobStorageService = blobStorageService ?? throw new ArgumentNullException(nameof(blobStorageService));
     private readonly ILogger<ImageService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+    private readonly IDistributedCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
     public string GetImageUri(string? imagePath)
     {
@@ -18,7 +21,8 @@ public class ImageService(IBlobStorageService blobStorageService, ILogger<ImageS
             return "/images/default.jpg";
         }
 
-        if (_cache.TryGetValue(imagePath, out string? cachedUri) && cachedUri is not null)
+        var cachedUri = _cache.GetString(imagePath);
+        if (cachedUri is not null)
         {
             _logger.LogInformation("Cache hit for imagePath: {ImagePath}", imagePath);
             return cachedUri;
@@ -28,7 +32,10 @@ public class ImageService(IBlobStorageService blobStorageService, ILogger<ImageS
         try
         {
             string imageUri = _blobStorageService.GetBlobSasUri(imagePath);
-            _cache.Set(imagePath, imageUri, TimeSpan.FromMinutes(10));
+            _cache.SetString(imagePath, imageUri, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
             _logger.LogInformation("Image URI cached for imagePath: {ImagePath}", imagePath);
 
             return imageUri;

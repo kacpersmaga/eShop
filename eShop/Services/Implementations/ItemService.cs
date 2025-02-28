@@ -1,33 +1,44 @@
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using eShop.Data;
 using eShop.Models.Domain;
 using eShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace eShop.Services.Implementations;
 
-public class ItemService(ApplicationDbContext context, ILogger<ItemService> logger, IMemoryCache cache)
+public class ItemService(
+    ApplicationDbContext context,
+    ILogger<ItemService> logger,
+    IDistributedCache cache)
     : IItemService
 {
     private readonly ApplicationDbContext _context = context ?? throw new ArgumentNullException(nameof(context));
     private readonly ILogger<ItemService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+    private readonly IDistributedCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
 
     public async Task<IEnumerable<ShopItem>> GetAllItems()
     {
         const string cacheKey = "all_shop_items";
         
-        if (_cache.TryGetValue(cacheKey, out IEnumerable<ShopItem>? cachedItems) && cachedItems != null)
+        var cachedItems = await _cache.GetStringAsync(cacheKey);
+        if (cachedItems is not null)
         {
             _logger.LogInformation("Returning cached shop items.");
-            return cachedItems;
+            return JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems)!;
         }
 
         _logger.LogInformation("Fetching all items from the database.");
         var items = await _context.ShopItems.AsNoTracking().ToListAsync();
 
-        _cache.Set(cacheKey, items, _cacheDuration);
+        await _cache.SetStringAsync(
+            cacheKey,
+            JsonSerializer.Serialize(items),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _cacheDuration
+            });
 
         return items;
     }
@@ -40,7 +51,7 @@ public class ItemService(ApplicationDbContext context, ILogger<ItemService> logg
         await _context.ShopItems.AddAsync(item);
         await _context.SaveChangesAsync();
         
-        _cache.Remove("all_shop_items");
+        await _cache.RemoveAsync("all_shop_items");
 
         _logger.LogInformation("Successfully added item: {@Item}", item);
     }
