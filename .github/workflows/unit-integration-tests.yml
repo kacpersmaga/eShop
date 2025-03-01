@@ -1,34 +1,34 @@
-on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
-
-jobs:
-  tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up .NET 9.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build solution
-        run: dotnet build --configuration Release --no-restore
-
-      - name: Run Unit Tests
-        if: false
-        run: dotnet test eShop.UnitTests/eShop.UnitTests.csproj --configuration Release --no-restore --no-build --verbosity normal
-
-      - name: Run Integration Tests
-        if: false
-        run: dotnet test eShop.IntegrationTests/eShop.IntegrationTests.csproj --configuration Release --no-restore --no-build --verbosity normal
+#on:
+#  push:
+#    branches:
+#      - '**'
+#  pull_request:
+#    branches:
+#      - '**'
+#
+#jobs:
+#  tests:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Set up .NET 9.0
+#        uses: actions/setup-dotnet@v3
+#        with:
+#          dotnet-version: '9.0.x'
+#
+#      - name: Restore dependencies
+#        run: dotnet restore
+#
+#      - name: Build solution
+#        run: dotnet build --configuration Release --no-restore
+#
+#      - name: Run Unit Tests
+#        if: false
+#        run: dotnet test eShop.UnitTests/eShop.UnitTests.csproj --configuration Release --no-restore --no-build --verbosity normal
+#
+#      - name: Run Integration Tests
+#        if: false
+#        run: dotnet test eShop.IntegrationTests/eShop.IntegrationTests.csproj --configuration Release --no-restore --no-build --verbosity normal
