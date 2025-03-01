@@ -13,7 +13,6 @@ using eShop.Models.Domain;
 using eShop.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace eShop.Api;
 
 [Route("api/[controller]")]
@@ -33,24 +32,24 @@ public class AuthController(
         {
             return ValidationProblem();
         }
-    
+
         var emailExists = await userManager.FindByEmailAsync(model.Email);
         if (emailExists != null)
         {
             ModelState.AddModelError("email", "Email is already in use.");
         }
-    
+
         var usernameExists = await userManager.FindByNameAsync(model.UserName);
         if (usernameExists != null)
         {
             ModelState.AddModelError("userName", "Username is already in use.");
         }
-    
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem();
         }
-    
+
         var user = new ApplicationUser { UserName = model.UserName, Email = model.Email };
         var result = await userManager.CreateAsync(user, model.Password);
 
@@ -102,33 +101,103 @@ public class AuthController(
             }});
         }
         
-        var accessToken = await CreateAccessToken(user);
-        var refreshToken = GenerateRefreshToken();
-        
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        await userManager.UpdateAsync(user);
-        
-        var cookieOptions = new CookieOptions
+        if (await userManager.GetTwoFactorEnabledAsync(user))
         {
-            HttpOnly = true,
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
-            Secure = true,
-            SameSite = SameSiteMode.Strict
-        };
+            return Ok(new { requiresTwoFactor = true, userName = user.UserName });
+        }
 
-        Response.Cookies.Append("authToken", accessToken, cookieOptions);
-        
-        var response = new AuthResponseDto
+        var tokens = await GenerateTokensForUser(user);
+        return Ok(tokens);
+    }
+
+    [HttpPost("verify-2fa")]
+    public async Task<IActionResult> VerifyTwoFactor([FromBody] Verify2faDto model)
+    {
+        if (!ModelState.IsValid)
         {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
-        };
+            return BadRequest(ModelState);
+        }
 
-        return Ok(response);
+        var user = await userManager.FindByNameAsync(model.UserName);
+        if (user == null)
+        {
+            return Unauthorized(new { message = "Invalid login attempt." });
+        }
+        
+        var isValid = await userManager.VerifyTwoFactorTokenAsync(
+            user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+
+        if (!isValid)
+        {
+            return Unauthorized(new { message = "Invalid two-factor authentication code." });
+        }
+
+        var tokens = await GenerateTokensForUser(user);
+        return Ok(tokens);
     }
     
+    [HttpPost("enable-2fa/confirm")]
+    [Authorize]
+    public async Task<IActionResult> ConfirmEnableTwoFactor([FromBody] Confirm2faDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+        
+        var isValid = await userManager.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+        if (!isValid)
+        {
+            return BadRequest(new { message = "Invalid authentication code." });
+        }
+        
+        user.TwoFactorEnabled = true;
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            return StatusCode(500, new { message = "Failed to enable 2FA." });
+        }
+        
+        return Ok(new { message = "Two-Factor Authentication enabled successfully." });
+    }
+    
+    [HttpGet("enable-2fa")]
+    [Authorize]
+    public async Task<IActionResult> EnableTwoFactor()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var key = await userManager.GetAuthenticatorKeyAsync(user);
+        if (string.IsNullOrEmpty(key))
+        {
+            await userManager.ResetAuthenticatorKeyAsync(user);
+            key = await userManager.GetAuthenticatorKeyAsync(user);
+        }
+
+        var qrCodeUri = $"otpauth://totp/eShop:{Uri.EscapeDataString(user.Email!)}?secret={key}&issuer=eShop";
+        return Ok(new { key, qrCodeUri });
+    }
+
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto tokenDto)
     {
@@ -136,48 +205,34 @@ public class AuthController(
         {
             return BadRequest("Refresh token is required");
         }
-        
+
         var user = await userManager.Users
             .FirstOrDefaultAsync(u => u.RefreshToken == tokenDto.RefreshToken);
-            
+
         if (user == null)
         {
             return Unauthorized("Invalid refresh token");
         }
-        
+
         if (user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             return Unauthorized("Refresh token expired");
         }
-        
-        var accessToken = await CreateAccessToken(user);
-        var refreshToken = GenerateRefreshToken();
-        
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        await userManager.UpdateAsync(user);
-        
-        var response = new AuthResponseDto
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
-        };
-        
-        return Ok(response);
+
+        var tokens = await GenerateTokensForUser(user);
+        return Ok(tokens);
     }
-    
+
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout([FromServices] ITokenRevocationService tokenRevocationService)
     {
         var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
-
         if (!string.IsNullOrEmpty(jti))
         {
             await tokenRevocationService.RevokeTokenByJtiAsync(jti);
         }
-        
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrEmpty(userId))
         {
@@ -189,9 +244,8 @@ public class AuthController(
                 await userManager.UpdateAsync(user);
             }
         }
-        
-        Response.Cookies.Delete("authToken");
 
+        Response.Cookies.Delete("authToken");
         return Ok(new { message = "Logged out successfully" });
     }
 
@@ -209,28 +263,51 @@ public class AuthController(
         return Ok(new { exists = user != null });
     }
     
-    #region Helper Methods
-    
+    private async Task<AuthResponseDto> GenerateTokensForUser(ApplicationUser user)
+    {
+        var accessToken = await CreateAccessToken(user);
+        var refreshToken = GenerateRefreshToken();
+
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        await userManager.UpdateAsync(user);
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
+            Secure = true,
+            SameSite = SameSiteMode.Strict
+        };
+
+        Response.Cookies.Append("authToken", accessToken, cookieOptions);
+
+        return new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
+        };
+    }
+
     private async Task<string> CreateAccessToken(ApplicationUser user)
     {
         var userRoles = await userManager.GetRolesAsync(user);
-        
         var jti = Guid.NewGuid().ToString();
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id),
-            new(ClaimTypes.Name, user.UserName!),
-            new(ClaimTypes.Email, user.Email!),
-            
-            new(JwtRegisteredClaimNames.Jti, jti)
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim(JwtRegisteredClaimNames.Jti, jti)
         };
 
         foreach (var role in userRoles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
-    
+
         var key = Encoding.UTF8.GetBytes(_jwtSettings.Secret);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -239,17 +316,15 @@ public class AuthController(
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
             SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key), 
+                new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
-    
         return tokenHandler.WriteToken(token);
     }
 
-    
     private static string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];
@@ -257,6 +332,5 @@ public class AuthController(
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
     }
-    
-    #endregion
 }
+

@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "Enable Two-Factor Authentication";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Enable Two-Factor Authentication</h2>
+
+<div id="info">
+    <p>Loading your 2FA details...</p>
+</div>
+
+<div id="qrcode" style="margin-top: 15px;"></div>
+
+<div id="confirmSection" style="display:none;">
+    <h3>Confirm Setup</h3>
+    <p>Enter the code from your authenticator app:</p>
+    <form id="confirm2faForm">
+        <div>
+            <label for="code">Authentication Code</label>
+            <input type="text" id="code" name="code" required />
+        </div>
+        <button type="submit">Confirm 2FA Setup</button>
+    </form>
+    <div id="confirmMessage" style="color:red; margin-top:10px;"></div>
+</div>
+
+<!-- Include QRCode.js library from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    async function load2faInfo() {
+        try {
+            const response = await fetch('/api/auth/enable-2fa', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const infoDiv = document.getElementById('info');
+                infoDiv.innerHTML = `
+                    <p>Your Authenticator Key: <strong>${data.key}</strong></p>
+                    <p>Scan the QR code below with your authenticator app:</p>
+                `;
+
+                // Generate the QR code using QRCode.js
+                new QRCode(document.getElementById("qrcode"), {
+                    text: data.qrCodeUri,
+                    width: 200,
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                document.getElementById('confirmSection').style.display = 'block';
+            } else {
+                document.getElementById('info').innerText = 'Failed to load 2FA details.';
+            }
+        } catch (error) {
+            document.getElementById('info').innerText = 'An error occurred while loading 2FA details.';
+        }
+    }
+
+    load2faInfo();
+
+    document.getElementById('confirm2faForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const code = document.getElementById('code').value;
+        const xsrfToken = getCookie('XSRF-TOKEN'); // Retrieve the CSRF token from cookies
+        try {
+            const response = await fetch('/api/auth/enable-2fa/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': xsrfToken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ code })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById('confirmMessage').style.color = 'green';
+                document.getElementById('confirmMessage').innerText = result.message;
+            } else {
+                document.getElementById('confirmMessage').style.color = 'red';
+                document.getElementById('confirmMessage').innerText = result.message || 'Failed to enable 2FA.';
+            }
+        } catch (error) {
+            document.getElementById('confirmMessage').innerText = 'An error occurred. Please try again.';
+        }
+    });
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return "";
+    }
+</script>

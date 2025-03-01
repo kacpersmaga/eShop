@@ -22,5 +22,16 @@ namespace eShop.Controllers
             return View();
         }
         
+        [HttpGet]
+        public IActionResult Enable2fa()
+        {
+            return View();
+        }
+        
+        [HttpGet]
+        public IActionResult Verify2fa()
+        {
+            return View();
+        }
     }
 }

@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h2>Register</h2>
@@ -10,22 +11,18 @@
     <div>
         <label for="userName">User Name</label>
         <input type="text" id="userName" name="userName" required />
-        <div id="userNameError" style="color:red; font-size:0.9em;"></div>
     </div>
     <div>
         <label for="email">Email</label>
         <input type="email" id="email" name="email" required />
-        <div id="emailError" style="color:red; font-size:0.9em;"></div>
     </div>
     <div>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required />
-        <div id="passwordError" style="color:red; font-size:0.9em;"></div>
     </div>
     <div>
         <label for="confirmPassword">Confirm Password</label>
         <input type="password" id="confirmPassword" name="confirmPassword" required />
-        <div id="confirmPasswordError" style="color:red; font-size:0.9em;"></div>
     </div>
     <div>
         <button type="submit">Register</button>
@@ -36,16 +33,12 @@
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-            return parts.pop().split(';').shift();
-        }
-        return "";
+        return parts.length === 2 ? parts.pop().split(';').shift() : "";
     }
 
     document.getElementById("registerForm").addEventListener("submit", async function(e) {
         e.preventDefault();
-        
-        document.querySelectorAll('[id$="Error"]').forEach(el => el.innerText = "");
+
         document.getElementById("message").innerText = "";
 
         const data = {
@@ -54,7 +47,7 @@
             password: document.getElementById("password").value,
             confirmPassword: document.getElementById("confirmPassword").value
         };
-        
+
         const xsrfToken = getCookie('XSRF-TOKEN');
 
         try {
@@ -72,31 +65,15 @@
 
             if (response.ok) {
                 document.getElementById("message").style.color = "green";
-                document.getElementById("message").innerText =
-                    "Registration successful. Redirecting to login...";
-
+                document.getElementById("message").innerText = "Registration successful. Redirecting to login...";
                 setTimeout(() => {
                     window.location.href = "/Account/Login";
                 }, 2000);
             } else {
-                if (result.errors) {
-                    for (const [field, errors] of Object.entries(result.errors)) {
-                        const errorElement = document.getElementById(`${field}Error`);
-                        if (errorElement) {
-                            errorElement.innerText = errors.join(", ");
-                        } else {
-                            document.getElementById("message").innerText +=
-                                `${field}: ${errors.join(", ")} `;
-                        }
-                    }
-                } else {
-                    document.getElementById("message").innerText =
-                        result.message || "Registration failed. Please check your input.";
-                }
+                document.getElementById("message").innerText = result.message || "Registration failed.";
             }
         } catch (error) {
-            document.getElementById("message").innerText =
-                "An error occurred. Please try again.";
+            document.getElementById("message").innerText = "An error occurred. Please try again.";
         }
     });
 </script>
