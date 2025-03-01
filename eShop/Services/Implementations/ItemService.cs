@@ -20,39 +20,55 @@ public class ItemService(
 
     public async Task<IEnumerable<ShopItem>> GetAllItems()
     {
-        const string cacheKey = "all_shop_items";
-        
-        var cachedItems = await _cache.GetStringAsync(cacheKey);
-        if (cachedItems is not null)
+        try
         {
-            _logger.LogInformation("Returning cached shop items.");
-            return JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems)!;
-        }
+            const string cacheKey = "all_shop_items";
 
-        _logger.LogInformation("Fetching all items from the database.");
-        var items = await _context.ShopItems.AsNoTracking().ToListAsync();
-
-        await _cache.SetStringAsync(
-            cacheKey,
-            JsonSerializer.Serialize(items),
-            new DistributedCacheEntryOptions
+            var cachedItems = await _cache.GetStringAsync(cacheKey);
+            if (cachedItems is not null)
             {
-                AbsoluteExpirationRelativeToNow = _cacheDuration
-            });
+                _logger.LogInformation("Returning cached shop items.");
+                return JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems)!;
+            }
 
-        return items;
+            _logger.LogInformation("Fetching all items from the database.");
+            var items = await _context.ShopItems.AsNoTracking().ToListAsync();
+
+            await _cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(items),
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _cacheDuration
+                });
+
+            return items;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all shop items from DB or cache.");
+            throw;
+        }
     }
 
     public async Task AddItem(ShopItem item)
     {
-        if (item == null) throw new ArgumentNullException(nameof(item));
+        try
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
 
-        _logger.LogInformation("Adding a new item: {@Item}", item);
-        await _context.ShopItems.AddAsync(item);
-        await _context.SaveChangesAsync();
-        
-        await _cache.RemoveAsync("all_shop_items");
+            _logger.LogInformation("Adding a new item: {@Item}", item);
+            await _context.ShopItems.AddAsync(item);
+            await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Successfully added item: {@Item}", item);
+            await _cache.RemoveAsync("all_shop_items");
+
+            _logger.LogInformation("Successfully added item: {@Item}", item);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding new item {@Item}", item);
+            throw;
+        }
     }
 }

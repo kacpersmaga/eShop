@@ -18,23 +18,30 @@ public class AdminApiController(
     [HttpPost("add")]
     public async Task<IActionResult> AddItem([FromForm] ShopItemFormModel model, [FromForm] IFormFile? image)
     {
-        string? uploadedPath = null;
-        if (image is { Length: > 0 })
+        try
         {
-            uploadedPath = await blobService.UploadFileAsync(image);
+            string? uploadedPath = null;
+            if (image is { Length: > 0 })
+            {
+                uploadedPath = await blobService.UploadFileAsync(image);
+            }
+
+            var shopItem = mapper.Map<ShopItem>(model);
+            shopItem.ImagePath = uploadedPath;
+
+            await itemService.AddItem(shopItem);
+            logger.LogInformation("Item '{Name}' added successfully.", model.Name);
+
+            var successResponse = new SuccessResponse
+            {
+                Message = $"Item '{model.Name}' added successfully!"
+            };
+            return Ok(successResponse);
         }
-
-        var shopItem = mapper.Map<ShopItem>(model);
-        shopItem.ImagePath = uploadedPath;
-
-        await itemService.AddItem(shopItem);
-
-        logger.LogInformation("Item '{Name}' added successfully.", model.Name);
-
-        var successResponse = new SuccessResponse
+        catch (Exception ex)
         {
-            Message = $"Item '{model.Name}' added successfully!"
-        };
-        return Ok(successResponse);
+            logger.LogError(ex, "Error occurred while adding item {Name}", model?.Name);
+            throw;
+        }
     }
 }

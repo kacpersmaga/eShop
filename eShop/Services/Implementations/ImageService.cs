@@ -15,23 +15,24 @@ public class ImageService(
 
     public string GetImageUri(string? imagePath)
     {
-        if (string.IsNullOrEmpty(imagePath))
-        {
-            _logger.LogWarning("ImagePath is null or empty. Returning default image.");
-            return "/images/default.jpg";
-        }
-
-        var cachedUri = _cache.GetString(imagePath);
-        if (cachedUri is not null)
-        {
-            _logger.LogInformation("Cache hit for imagePath: {ImagePath}", imagePath);
-            return cachedUri;
-        }
-
-        _logger.LogInformation("Cache miss for imagePath: {ImagePath}. Generating new URI.", imagePath);
         try
         {
-            string imageUri = _blobStorageService.GetBlobSasUri(imagePath);
+            if (string.IsNullOrEmpty(imagePath))
+            {
+                _logger.LogWarning("ImagePath is null or empty. Returning default image.");
+                return "/images/default.jpg";
+            }
+
+            var cachedUri = _cache.GetString(imagePath);
+            if (cachedUri is not null)
+            {
+                _logger.LogInformation("Cache hit for imagePath: {ImagePath}", imagePath);
+                return cachedUri;
+            }
+
+            _logger.LogInformation("Cache miss for imagePath: {ImagePath}. Generating new URI.", imagePath);
+            var imageUri = _blobStorageService.GetBlobSasUri(imagePath);
+
             _cache.SetString(imagePath, imageUri, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
@@ -42,7 +43,7 @@ public class ImageService(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to generate image URI for path: {ImagePath}", imagePath);
+            _logger.LogError(ex, "Failed to generate or retrieve image URI for path: {ImagePath}", imagePath);
             return "/images/default.jpg";
         }
     }
