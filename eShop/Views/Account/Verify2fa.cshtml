@@ -1,10 +1,6 @@
-@{
-    ViewData["Title"] = "Two-Factor Authentication Verification";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-}
 <h2>Two-Factor Authentication Verification</h2>
 
-<p>Please enter the authentication code from your authenticator app:</p>
+<p>Please enter the authentication code sent to your registered method:</p>
 
 <form id="verify2faForm">
     <div>
@@ -16,6 +12,7 @@
         <input type="text" id="code" name="code" required />
     </div>
     <button type="submit">Verify</button>
+    <button type="button" id="resendCode">Resend Code</button>
 </form>
 
 <div id="message" style="color:red; margin-top:10px;"></div>
@@ -25,6 +22,27 @@
     if (pendingUserName) {
         document.getElementById("userName").value = pendingUserName;
         document.getElementById("userName").readOnly = true;
+        send2faCode(pendingUserName); // Auto-send code on page load
+    }
+
+    async function send2faCode(userName) {
+        const xsrfToken = getCookie('XSRF-TOKEN');
+        try {
+            const response = await fetch('/api/auth/send-2fa-code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': xsrfToken
+                },
+                credentials: 'include',
+                body: JSON.stringify({ userName })
+            });
+            const result = await response.json();
+            document.getElementById('message').style.color = response.ok ? 'green' : 'red';
+            document.getElementById('message').innerText = result.message;
+        } catch (error) {
+            document.getElementById('message').innerText = 'Error sending code';
+        }
     }
 
     document.getElementById('verify2faForm').addEventListener('submit', async function(e) {
@@ -32,10 +50,11 @@
         const userName = document.getElementById('userName').value;
         const code = document.getElementById('code').value;
         const xsrfToken = getCookie('XSRF-TOKEN');
+
         try {
             const response = await fetch('/api/auth/verify-2fa', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': xsrfToken
                 },
@@ -50,19 +69,24 @@
                 localStorage.removeItem("pendingUserName");
                 setTimeout(() => { window.location.href = "/"; }, 2000);
             } else {
-                document.getElementById('message').innerText = result.message || 'Verification failed.';
+                document.getElementById('message').innerText = result.message || 'Verification failed';
             }
         } catch (error) {
-            document.getElementById('message').innerText = 'An error occurred. Please try again.';
+            document.getElementById('message').innerText = 'Error verifying code';
+        }
+    });
+
+    document.getElementById('resendCode').addEventListener('click', function() {
+        const userName = document.getElementById('userName').value;
+        if (userName) {
+            send2faCode(userName);
         }
     });
 
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-            return parts.pop().split(';').shift();
-        }
+        if (parts.length === 2) return parts.pop().split(';').shift();
         return "";
     }
 </script>
