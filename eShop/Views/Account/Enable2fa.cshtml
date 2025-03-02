@@ -5,26 +5,55 @@
 
 <h2>Enable Two-Factor Authentication</h2>
 
-<div id="info">
-    <p>Loading your 2FA details...</p>
-</div>
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>App-Based Authentication</h3>
+            </div>
+            <div class="card-body">
+                <div id="info">
+                    <p>Loading your authenticator app details...</p>
+                </div>
 
-<div id="qrcode" style="margin-top: 15px;"></div>
+                <div id="qrcode" style="margin-top: 15px;"></div>
 
-<div id="confirmSection" style="display:none;">
-    <h3>Confirm Setup</h3>
-    <p>Enter the code from your authenticator app:</p>
-    <form id="confirm2faForm">
-        <div>
-            <label for="code">Authentication Code</label>
-            <input type="text" id="code" name="code" required />
+                <div id="confirmSection" style="display:none; margin-top: 20px;">
+                    <h4>Confirm Setup</h4>
+                    <p>Enter the code from your authenticator app:</p>
+                    <form id="confirm2faForm">
+                        <div class="form-group">
+                            <label for="code">Authentication Code</label>
+                            <input type="text" class="form-control" id="code" name="code" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-2">Confirm 2FA Setup</button>
+                    </form>
+                    <div id="confirmMessage" style="margin-top:10px;"></div>
+                </div>
+            </div>
         </div>
-        <button type="submit">Confirm 2FA Setup</button>
-    </form>
-    <div id="confirmMessage" style="color:red; margin-top:10px;"></div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Alternative Methods</h3>
+            </div>
+            <div class="card-body">
+                <div id="choose2faSection">
+                    <p>Choose one of these alternative 2FA methods:</p>
+
+                    <button id="email2faButton" class="btn btn-info mb-3">Use Email for 2FA</button>
+                    <div id="emailMessage" style="margin-bottom:15px;"></div>
+
+                    <button id="phone2faButton" class="btn btn-info">Use Phone for 2FA</button>
+                    <div id="phoneMessage" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Include QRCode.js library from CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
@@ -34,6 +63,7 @@
                 method: 'GET',
                 credentials: 'include'
             });
+
             if (response.ok) {
                 const data = await response.json();
                 const infoDiv = document.getElementById('info');
@@ -42,14 +72,13 @@
                     <p>Scan the QR code below with your authenticator app:</p>
                 `;
 
-                // Generate the QR code using QRCode.js
                 new QRCode(document.getElementById("qrcode"), {
                     text: data.qrCodeUri,
                     width: 200,
                     height: 200,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
                 });
 
                 document.getElementById('confirmSection').style.display = 'block';
@@ -61,12 +90,85 @@
         }
     }
 
+    document.getElementById('email2faButton').addEventListener('click', async () => {
+        const emailMsgEl = document.getElementById('emailMessage');
+        emailMsgEl.innerText = "Sending verification code...";
+        emailMsgEl.style.color = "blue";
+
+        const xsrfToken = getCookie('XSRF-TOKEN');
+        try {
+            const response = await fetch('/api/auth/enable-2fa/email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': xsrfToken
+                },
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                emailMsgEl.style.color = "green";
+                emailMsgEl.innerText = result.message || "Verification code sent to your email.";
+                setTimeout(() => {
+                    window.location.href = "/Account/ConfirmEmail2fa";
+                }, 1500);
+            } else {
+                emailMsgEl.style.color = "red";
+                emailMsgEl.innerText = result.message || "Failed to enable 2FA via Email.";
+            }
+        } catch (error) {
+            emailMsgEl.style.color = "red";
+            emailMsgEl.innerText = "An error occurred. Please try again.";
+        }
+    });
+
+    document.getElementById('phone2faButton').addEventListener('click', async () => {
+        const phoneMsgEl = document.getElementById('phoneMessage');
+        phoneMsgEl.innerText = "Sending verification code...";
+        phoneMsgEl.style.color = "blue";
+
+        const xsrfToken = getCookie('XSRF-TOKEN');
+        try {
+            const response = await fetch('/api/auth/enable-2fa/phone', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': xsrfToken
+                },
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                phoneMsgEl.style.color = "green";
+                phoneMsgEl.innerText = result.message || "Verification code sent to your phone.";
+                setTimeout(() => {
+                    window.location.href = "/Account/ConfirmPhone2fa";
+                }, 1500);
+            } else {
+                phoneMsgEl.style.color = "red";
+                phoneMsgEl.innerText = result.message || "Failed to enable 2FA via Phone.";
+            }
+        } catch (error) {
+            phoneMsgEl.style.color = "red";
+            phoneMsgEl.innerText = "An error occurred. Please try again.";
+        }
+    });
+
     load2faInfo();
 
-    document.getElementById('confirm2faForm').addEventListener('submit', async function(e) {
+    document.getElementById('confirm2faForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const code = document.getElementById('code').value;
-        const xsrfToken = getCookie('XSRF-TOKEN'); // Retrieve the CSRF token from cookies
+        const confirmMsgEl = document.getElementById('confirmMessage');
+        confirmMsgEl.innerText = "Verifying...";
+        confirmMsgEl.style.color = "blue";
+
+        const xsrfToken = getCookie('XSRF-TOKEN');
+
         try {
             const response = await fetch('/api/auth/enable-2fa/confirm', {
                 method: 'POST',
@@ -77,25 +179,25 @@
                 credentials: 'include',
                 body: JSON.stringify({ code })
             });
+
             const result = await response.json();
+
             if (response.ok) {
-                document.getElementById('confirmMessage').style.color = 'green';
-                document.getElementById('confirmMessage').innerText = result.message;
+                confirmMsgEl.style.color = 'green';
+                confirmMsgEl.innerText = result.message || "2FA enabled successfully!";
             } else {
-                document.getElementById('confirmMessage').style.color = 'red';
-                document.getElementById('confirmMessage').innerText = result.message || 'Failed to enable 2FA.';
+                confirmMsgEl.style.color = 'red';
+                confirmMsgEl.innerText = result.message || 'Failed to enable 2FA.';
             }
         } catch (error) {
-            document.getElementById('confirmMessage').innerText = 'An error occurred. Please try again.';
+            confirmMsgEl.style.color = 'red';
+            confirmMsgEl.innerText = 'An error occurred. Please try again.';
         }
     });
 
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-            return parts.pop().split(';').shift();
-        }
-        return "";
+        return parts.length === 2 ? parts.pop().split(';').shift() : "";
     }
 </script>
