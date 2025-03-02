@@ -20,7 +20,9 @@ namespace eShop.Api;
 public class AuthController(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    IOptions<JwtSettings> jwtSettings)
+    IOptions<JwtSettings> jwtSettings, 
+    IEmailService emailService,
+    IPhoneService phoneService)
     : ControllerBase
 {
     private readonly JwtSettings _jwtSettings = jwtSettings.Value;
@@ -68,8 +70,16 @@ public class AuthController(
             }
             return ValidationProblem();
         }
+        
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+        
+        var callbackUrl = $"{Request.Scheme}://{Request.Host}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+        
+        await emailService.SendEmailAsync(user.Email, "Confirm your eShop account", 
+            $"Please confirm your account by clicking here: <a href='{callbackUrl}'>Confirm Email</a>");
 
-        return Ok(new { message = "Registration successful." });
+        return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
     }
 
     [HttpPost("login")]
@@ -123,9 +133,19 @@ public class AuthController(
         {
             return Unauthorized(new { message = "Invalid login attempt." });
         }
+    
+        bool isValid;
         
-        var isValid = await userManager.VerifyTwoFactorTokenAsync(
-            user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+        if (user.TwoFactorType == "Email" || user.TwoFactorType == "Phone")
+        {
+            isValid = await userManager.VerifyTwoFactorTokenAsync(
+                user, user.TwoFactorType, model.Code);
+        }
+        else
+        {
+            isValid = await userManager.VerifyTwoFactorTokenAsync(
+                user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+        }
 
         if (!isValid)
         {
@@ -156,7 +176,20 @@ public class AuthController(
             return Unauthorized();
         }
         
-        var isValid = await userManager.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+        bool isValid;
+        
+        if (user.TwoFactorType == "Email")
+        {
+            isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Email", model.Code);
+        }
+        else if (user.TwoFactorType == "Phone")
+        {
+            isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Phone", model.Code);
+        }
+        else
+        {
+            isValid = await userManager.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultAuthenticatorProvider, model.Code);
+        }
         if (!isValid)
         {
             return BadRequest(new { message = "Invalid authentication code." });
@@ -263,6 +296,156 @@ public class AuthController(
         return Ok(new { exists = user != null });
     }
     
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+    {
+        var user = await userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            return Ok(new { message = "If the email is registered, you will receive a password reset link." });
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+        
+        var callbackUrl = $"{Request.Scheme}://{Request.Host}/Account/ResetPassword?userId={user.Id}&token={encodedToken}";
+
+        await emailService.SendEmailAsync(user.Email!, "Reset Password", $"Please reset your password by clicking here: <a href='{callbackUrl}'>Reset Password</a>");
+
+        return Ok(new { message = "Password reset link has been sent to your email." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null)
+        {
+            return BadRequest("Invalid request");
+        }
+
+        var result = await userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            var errors = new Dictionary<string, string[]>();
+            foreach (var error in result.Errors)
+            {
+                if (errors.ContainsKey("password"))
+                {
+                    var errorList = errors["password"].ToList();
+                    errorList.Add(error.Description);
+                    errors["password"] = errorList.ToArray();
+                }
+                else
+                {
+                    errors.Add("password", new[] { error.Description });
+                }
+            }
+            return BadRequest(new { errors });
+        }
+
+        return Ok(new { message = "Password has been reset successfully." });
+    }
+    
+
+    [HttpPost("send-2fa-code")]
+    public async Task<IActionResult> SendTwoFactorCode([FromBody] Send2faCodeDto model)
+    {
+        var user = await userManager.FindByNameAsync(model.UserName);
+        if (user == null)
+        {
+            return Ok(new { message = "If the account exists, a 2FA code has been sent." });
+        }
+
+        string provider = model.Provider ?? user.TwoFactorType ?? "Email";
+        var code = await userManager.GenerateTwoFactorTokenAsync(user, provider);
+
+        try
+        {
+            if (provider == "Email")
+            {
+                if (string.IsNullOrEmpty(user.Email))
+                    return BadRequest("User has no email address configured");
+                await emailService.SendEmailAsync(user.Email, "Your 2FA Code", 
+                    $"Your verification code is: {code}");
+            }
+            else if (provider == "Phone")
+            {
+                if (string.IsNullOrEmpty(user.PhoneNumber))
+                    return BadRequest("User has no phone number configured");
+                await phoneService.SendSmsAsync(user.PhoneNumber, 
+                    $"Your verification code is: {code}");
+            }
+            else
+            {
+                return BadRequest("Invalid 2FA provider");
+            }
+            return Ok(new { message = "2FA code sent successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to send 2FA code", error = ex.Message });
+        }
+    }
+    
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+    {
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(token))
+        {
+            return BadRequest("User ID and token are required");
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        var result = await userManager.ConfirmEmailAsync(user, token);
+        if (!result.Succeeded)
+        {
+            return BadRequest("Failed to confirm email. The token may be invalid or expired.");
+        }
+        
+        return Redirect("/Account/ConfirmEmailSuccess");
+    }
+
+    [HttpPost("send-confirmation-email")]
+    [Authorize]
+    public async Task<IActionResult> SendConfirmationEmail()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized();
+        }
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            return BadRequest("Email is already confirmed.");
+        }
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+        var callbackUrl = $"{Request.Scheme}://{Request.Host}/api/auth/confirm-email?userId={user.Id}&token={encodedToken}";
+
+        await emailService.SendEmailAsync(user.Email!, "Confirm your email", 
+            $"Please confirm your account by clicking here: <a href='{callbackUrl}'>Confirm Email</a>");
+
+        return Ok(new { message = "Confirmation email sent." });
+    }
+    
     private async Task<AuthResponseDto> GenerateTokensForUser(ApplicationUser user)
     {
         var accessToken = await CreateAccessToken(user);
@@ -289,6 +472,77 @@ public class AuthController(
             AccessTokenExpiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
         };
     }
+    
+[HttpPost("enable-2fa/email")]
+[Authorize]
+public async Task<IActionResult> EnableTwoFactorEmail()
+{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(userId))
+    {
+        return Unauthorized();
+    }
+    
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return Unauthorized();
+    }
+    
+    if (string.IsNullOrEmpty(user.Email))
+    {
+        return BadRequest("You must have a confirmed email to use email-based 2FA.");
+    }
+    
+    if (!await userManager.IsEmailConfirmedAsync(user))
+    {
+        return BadRequest("You must confirm your email before enabling email-based 2FA.");
+    }
+    
+    var token = await userManager.GenerateTwoFactorTokenAsync(user, "Email");
+    await emailService.SendEmailAsync(user.Email, "2FA Test Code", 
+        $"Your 2FA test code is: {token}. Enter this code to enable Email 2FA.");
+    
+    user.TwoFactorType = "Email";
+    await userManager.UpdateAsync(user);
+    
+    return Ok(new { message = "Test code sent to your email. Please verify it to complete setup." });
+}
+
+[HttpPost("enable-2fa/phone")]
+[Authorize]
+public async Task<IActionResult> EnableTwoFactorPhone()
+{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (string.IsNullOrEmpty(userId))
+    {
+        return Unauthorized();
+    }
+    
+    var user = await userManager.FindByIdAsync(userId);
+    if (user == null)
+    {
+        return Unauthorized();
+    }
+    
+    if (string.IsNullOrEmpty(user.PhoneNumber))
+    {
+        return BadRequest("You must have a confirmed phone number to use phone-based 2FA.");
+    }
+    
+    if (!await userManager.IsPhoneNumberConfirmedAsync(user))
+    {
+        return BadRequest("You must confirm your phone number before enabling phone-based 2FA.");
+    }
+    
+    var token = await userManager.GenerateTwoFactorTokenAsync(user, "Phone");
+    await phoneService.SendSmsAsync(user.PhoneNumber, $"Your 2FA test code is: {token}. Enter this code to enable Phone 2FA.");
+
+    user.TwoFactorType = "Phone";
+    await userManager.UpdateAsync(user);
+    
+    return Ok(new { message = "Test code sent to your phone. Please verify it to complete setup." });
+}
 
     private async Task<string> CreateAccessToken(ApplicationUser user)
     {
