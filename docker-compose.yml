@@ -54,6 +54,16 @@
       - JwtSettings__Issuer=https://localhost:8080
       - JwtSettings__Audience=eShopAudience
       - JwtSettings__ExpirationInMinutes=60
+      - EmailSettings__SmtpServer=smtp.gmail.com
+      - EmailSettings__SmtpPort=587
+      - EmailSettings__EnableSsl=true
+      - EmailSettings__SmtpUsername=******
+      - EmailSettings__SmtpPassword=******
+      - EmailSettings__FromEmail=******
+      - EmailSettings__FromName=eShop
+      - TwilioSettings__AccountSid=******
+      - TwilioSettings__AuthToken=******
+      - TwilioSettings__FromPhoneNumber=******
 
 networks:
   app-network:
