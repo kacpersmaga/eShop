@@ -9,6 +9,7 @@ using eShop.Models.Domain;
 using eShop.Models.Settings;
 using eShop.Services.Implementations;
 using eShop.Services.Interfaces;
+using eShop.Validators.Dtos;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -67,7 +68,7 @@ try
             
             options.User.RequireUniqueEmail = true;
             
-            options.SignIn.RequireConfirmedEmail = false;
+            options.SignIn.RequireConfirmedEmail = true;
             
             options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
         })
@@ -148,6 +149,8 @@ try
     builder.Services.AddScoped<IItemService, ItemService>();
     builder.Services.AddScoped<IImageService, ImageService>();
     builder.Services.AddScoped<ITokenRevocationService, TokenRevocationService>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IPhoneService, PhoneService>();
 
     // Add AutoMapper for object-to-object mapping
     builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -170,6 +173,9 @@ try
             return new BadRequestObjectResult(new ValidationProblemDetails(context.ModelState));
         };
     });
+    
+    builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+    builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("TwilioSettings"));
 
     var app = builder.Build();
 
