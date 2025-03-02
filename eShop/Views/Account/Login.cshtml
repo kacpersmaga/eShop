@@ -30,12 +30,12 @@
 
     document.getElementById("loginForm").addEventListener("submit", async function(e) {
         e.preventDefault();
-        document.getElementById("message").innerText = "";
+        const messageElement = document.getElementById("message");
+        messageElement.innerText = "";
+        messageElement.style.color = "red";
 
-        const data = {
-            userName: document.getElementById("userName").value,
-            password: document.getElementById("password").value
-        };
+        const userName = document.getElementById("userName").value;
+        const password = document.getElementById("password").value;
         const xsrfToken = getCookie('XSRF-TOKEN');
 
         try {
@@ -46,26 +46,31 @@
                     'X-CSRF-TOKEN': xsrfToken
                 },
                 credentials: 'include',
-                body: JSON.stringify(data)
+                body: JSON.stringify({ userName, password })
             });
 
             const result = await response.json();
+
             if (response.ok) {
                 if (result.requiresTwoFactor) {
-                    localStorage.setItem("pendingUserName", result.userName);
+                    sessionStorage.setItem("pendingUserName", userName);
                     window.location.href = "/Account/Verify2fa";
-                }
-                else {
-                    document.getElementById("message").style.color = "green";
-                    document.getElementById("message").innerText = "Login successful. Redirecting...";
-                    localStorage.setItem("refreshToken", result.refreshToken);
+                } else {
+                    messageElement.style.color = "green";
+                    messageElement.innerText = "Login successful. Redirecting...";
+                    
                     setTimeout(() => { window.location.href = "/"; }, 2000);
                 }
             } else {
-                document.getElementById("message").innerText = result.message || "Invalid login attempt.";
+                if (result.errors && result.errors.auth) {
+                    messageElement.innerText = result.errors.auth[0];
+                } else {
+                    messageElement.innerText = "Invalid login attempt.";
+                }
             }
         } catch (error) {
-            document.getElementById("message").innerText = "An error occurred. Please try again.";
+            console.error('Login error:', error);
+            messageElement.innerText = "An error occurred. Please try again.";
         }
     });
 </script>
