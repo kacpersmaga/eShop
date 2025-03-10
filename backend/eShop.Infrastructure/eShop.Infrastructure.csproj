@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
+      <PackageReference Include="MailKit" Version="4.10.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.2" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.2" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
+      <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
+      <PackageReference Include="MimeKit" Version="4.10.0" />
+      <PackageReference Include="Twilio" Version="7.8.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\eShop.Modules.Catalog\eShop.Modules.Catalog.csproj" />
+      <ProjectReference Include="..\eShop.Shared\eShop.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+      <Folder Include="Services\Implementations\" />
+      <Folder Include="Services\Interfaces\" />
+    </ItemGroup>
+
+</Project>
