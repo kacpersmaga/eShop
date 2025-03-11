@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eShop.Infrastructure.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<ApplicationUser>(options)
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public DbSet<ShopItem> ShopItems { get; set; }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<ShopItem> ShopItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -16,18 +20,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         
         builder.Entity<ShopItem>(entity =>
         {
-            entity.Property(x => x.Name)
+            entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(100);
-            entity.Property(x => x.Price)
+                
+            entity.Property(e => e.Price)
                 .HasColumnType("decimal(18, 2)")
                 .HasPrecision(18, 2);
-            entity.Property(x => x.Description)
+                
+            entity.Property(e => e.Description)
                 .HasMaxLength(500);
-            entity.Property(x => x.Category)
+                
+            entity.Property(e => e.Category)
                 .IsRequired()
                 .HasMaxLength(50);
-            entity.Property(x => x.ImagePath)
+                
+            entity.Property(e => e.ImagePath)
                 .HasMaxLength(200);
         });
     }

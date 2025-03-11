@@ -1,9 +1,11 @@
+using eShop.Shared.Common;
 using Microsoft.AspNetCore.Http;
 
 namespace eShop.Shared.Interfaces.Storage;
 
 public interface IBlobStorageService
 {
-    Task<string> UploadFileAsync(IFormFile file);
-    string GetBlobSasUri(string blobName);
+    Task<Result<string>> UploadFileAsync(IFormFile file);
+    Task<Result> DeleteFileAsync(string filePath);
+    Result<string> GetBlobSasUri(string blobName);
 }

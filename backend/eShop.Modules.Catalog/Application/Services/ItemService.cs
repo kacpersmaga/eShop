@@ -1,9 +1,10 @@
+// File: eShop.Modules.Catalog/Application/Services/ItemService.cs - Fixed Variable Conflicts
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
-using eShop.Models.Domain;
 using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Modules.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;
+using eShop.Shared.Common;
 
 namespace eShop.Modules.Catalog.Application.Services;
 
@@ -13,6 +14,7 @@ public class ItemService : IItemService
     private readonly ILogger<ItemService> _logger;
     private readonly IDistributedCache _cache;
     private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
+    private const string AllItemsCacheKey = "all_shop_items";
 
     public ItemService(
         IItemRepository itemRepository,
@@ -24,55 +26,148 @@ public class ItemService : IItemService
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
-    public async Task<IEnumerable<ShopItem>> GetAllItems()
+    public async Task<Result<IEnumerable<ShopItem>>> GetAllItems()
     {
         try
         {
-            const string cacheKey = "all_shop_items";
-
-            var cachedItems = await _cache.GetStringAsync(cacheKey);
+            var cachedItems = await _cache.GetStringAsync(AllItemsCacheKey);
             if (cachedItems is not null)
             {
                 _logger.LogInformation("Returning cached shop items");
-                return JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems)!;
+                var cachedResult = JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems);
+                return Result<IEnumerable<ShopItem>>.Success(cachedResult!);
             }
 
-            var items = await _itemRepository.GetAllAsync();
+            var dbItems = await _itemRepository.GetAllAsync();
 
             await _cache.SetStringAsync(
-                cacheKey,
-                JsonSerializer.Serialize(items),
+                AllItemsCacheKey,
+                JsonSerializer.Serialize(dbItems),
                 new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = _cacheDuration
                 });
 
-            return items;
+            return Result<IEnumerable<ShopItem>>.Success(dbItems);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all shop items from DB or cache");
-            throw;
+            return Result<IEnumerable<ShopItem>>.Failure($"Failed to retrieve items: {ex.Message}");
         }
     }
 
-    public async Task AddItem(ShopItem item)
+    public async Task<Result<ShopItem?>> GetItemById(int id)
     {
         try
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
+            var cacheKey = $"shop_item_{id}";
+            
+            var cachedItem = await _cache.GetStringAsync(cacheKey);
+            if (cachedItem is not null)
+            {
+                _logger.LogInformation("Returning cached shop item with ID {ItemId}", id);
+                var cachedResult = JsonSerializer.Deserialize<ShopItem>(cachedItem);
+                return Result<ShopItem?>.Success(cachedResult);
+            }
+
+            var dbItem = await _itemRepository.GetByIdAsync(id);
+            if (dbItem == null)
+            {
+                return Result<ShopItem?>.Success(null);
+            }
+
+            await _cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(dbItem),
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = _cacheDuration
+                });
+
+            return Result<ShopItem?>.Success(dbItem);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving shop item with ID {ItemId}", id);
+            return Result<ShopItem?>.Failure($"Failed to retrieve item: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> AddItem(ShopItem item)
+    {
+        try
+        {
+            if (item == null) 
+                return Result.Failure("Item cannot be null");
 
             await _itemRepository.AddAsync(item);
             await _itemRepository.SaveChangesAsync();
             
-            await _cache.RemoveAsync("all_shop_items");
+            await _cache.RemoveAsync(AllItemsCacheKey);
 
             _logger.LogInformation("Successfully added item: {@Item}", item);
+            return Result.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adding new item {@Item}", item);
-            throw;
+            return Result.Failure($"Failed to add item: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> UpdateItem(ShopItem item)
+    {
+        try
+        {
+            if (item == null) 
+                return Result.Failure("Item cannot be null");
+
+            var existingItem = await _itemRepository.GetByIdAsync(item.Id);
+            if (existingItem == null)
+            {
+                return Result.Failure($"Item with ID {item.Id} not found");
+            }
+
+            await _itemRepository.UpdateAsync(item);
+            await _itemRepository.SaveChangesAsync();
+            
+            await _cache.RemoveAsync(AllItemsCacheKey);
+            await _cache.RemoveAsync($"shop_item_{item.Id}");
+
+            _logger.LogInformation("Successfully updated item with ID {ItemId}: {@Item}", item.Id, item);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating item with ID {ItemId}", item?.Id);
+            return Result.Failure($"Failed to update item: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> DeleteItem(int id)
+    {
+        try
+        {
+            var existingItem = await _itemRepository.GetByIdAsync(id);
+            if (existingItem == null)
+            {
+                return Result.Failure($"Item with ID {id} not found");
+            }
+
+            await _itemRepository.DeleteAsync(id);
+            await _itemRepository.SaveChangesAsync();
+            
+            await _cache.RemoveAsync(AllItemsCacheKey);
+            await _cache.RemoveAsync($"shop_item_{id}");
+
+            _logger.LogInformation("Successfully deleted item with ID {ItemId}", id);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting item with ID {ItemId}", id);
+            return Result.Failure($"Failed to delete item: {ex.Message}");
         }
     }
 }

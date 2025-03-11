@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using eShop.Modules.Catalog.Application.Services;
-using eShop.Modules.Catalog.Commands;
 using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Shared.Common;
 using eShop.Shared.Interfaces.Storage;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Modules.Catalog.Application.Queries.Handlers;
+namespace eShop.Modules.Catalog.Commands.Handlers;
 
 public class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<string>>
 {
@@ -35,20 +34,30 @@ public class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<stri
             string? uploadedPath = null;
             if (request.Image is { Length: > 0 })
             {
-                uploadedPath = await _blobService.UploadFileAsync(request.Image);
+                var uploadResult = await _blobService.UploadFileAsync(request.Image);
+                if (!uploadResult.Succeeded)
+                {
+                    return Result<string>.Failure(uploadResult.Errors);
+                }
+                uploadedPath = uploadResult.Data;
             }
 
             var shopItem = _mapper.Map<ShopItem>(request.Model);
             shopItem.ImagePath = uploadedPath;
 
-            await _itemService.AddItem(shopItem);
+            var result = await _itemService.AddItem(shopItem);
+            if (!result.Succeeded)
+            {
+                return Result<string>.Failure(result.Errors);
+            }
+            
             _logger.LogInformation("Item '{Name}' added successfully.", request.Model.Name);
 
             return Result<string>.Success($"Item '{request.Model.Name}' added successfully!");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to add item {Name}", request.Model.Name);
+            _logger.LogError(ex, "Failed to add item {Name}", request.Model?.Name);
             return Result<string>.Failure($"Failed to add item: {ex.Message}");
         }
     }

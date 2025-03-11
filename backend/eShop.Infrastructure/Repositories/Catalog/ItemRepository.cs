@@ -1,5 +1,4 @@
 ﻿using eShop.Infrastructure.Data;
-using eShop.Models.Domain;
 using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Modules.Catalog.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -24,12 +23,39 @@ public class ItemRepository : IItemRepository
         return await _context.ShopItems.AsNoTracking().ToListAsync();
     }
 
+    public async Task<ShopItem?> GetByIdAsync(int id)
+    {
+        _logger.LogInformation("Fetching item with ID {ItemId} from the database", id);
+        return await _context.ShopItems.FindAsync(id);
+    }
+
     public async Task AddAsync(ShopItem item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         
         _logger.LogInformation("Adding a new item: {@Item}", item);
         await _context.ShopItems.AddAsync(item);
+    }
+
+    public async Task UpdateAsync(ShopItem item)
+    {
+        if (item == null) throw new ArgumentNullException(nameof(item));
+        
+        _logger.LogInformation("Updating item with ID {ItemId}: {@Item}", item.Id, item);
+        
+        _context.Entry(item).State = EntityState.Modified;
+        item.UpdatedAt = DateTime.UtcNow;
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        _logger.LogInformation("Deleting item with ID {ItemId}", id);
+        
+        var item = await _context.ShopItems.FindAsync(id);
+        if (item != null)
+        {
+            _context.ShopItems.Remove(item);
+        }
     }
 
     public async Task SaveChangesAsync()

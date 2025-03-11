@@ -1,4 +1,5 @@
 using Azure.Storage.Sas;
+using eShop.Shared.Common;
 using eShop.Shared.Interfaces.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -25,23 +26,23 @@ public class BlobStorageService : IBlobStorageService
         _containerName = configuration["AzureBlobStorage:ContainerName"] ?? "images";
     }
 
-    public async Task<string> UploadFileAsync(IFormFile file)
+    public async Task<Result<string>> UploadFileAsync(IFormFile file)
     {
         try
         {
             if (file == null)
             {
-                throw new ArgumentNullException(nameof(file), "File cannot be null.");
+                return Result<string>.Failure("File cannot be null.");
             }
 
             if (file.Length == 0)
             {
-                throw new ArgumentException("File cannot be empty.", nameof(file));
+                return Result<string>.Failure("File cannot be empty.");
             }
 
             var validImageTypes = new[] { "image/jpeg", "image/png", "image/gif" };
             if (!validImageTypes.Contains(file.ContentType))
-                throw new ArgumentException("Only image files are allowed.", nameof(file));
+                return Result<string>.Failure("Only image files are allowed.");
 
             var blobName = Guid.NewGuid() + Path.GetExtension(file.FileName);
 
@@ -51,33 +52,56 @@ public class BlobStorageService : IBlobStorageService
             }
 
             _logger.LogInformation("File uploaded successfully: {BlobName}", blobName);
-            return blobName;
+            return Result<string>.Success(blobName);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading file {FileName}", file?.FileName);
-            throw;
+            return Result<string>.Failure($"Error uploading file: {ex.Message}");
         }
     }
 
-    public string GetBlobSasUri(string blobName)
+    public async Task<Result> DeleteFileAsync(string filePath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return Result.Failure("File path cannot be null or empty.");
+            }
+            
+            string blobName = Path.GetFileName(filePath);
+
+            await _blobWrapper.DeleteBlobAsync(_containerName, blobName);
+            _logger.LogInformation("File deleted successfully: {BlobName}", blobName);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting file {FilePath}", filePath);
+            return Result.Failure($"Error deleting file: {ex.Message}");
+        }
+    }
+
+    public Result<string> GetBlobSasUri(string blobName)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(blobName))
             {
-                throw new ArgumentException("Blob name cannot be null or empty.", nameof(blobName));
+                return Result<string>.Failure("Blob name cannot be null or empty.");
             }
 
             var sasUri = _blobWrapper.GenerateBlobSasUri(_containerName, blobName, BlobSasPermissions.Read, TimeSpan.FromHours(1));
             _logger.LogInformation("Generated SAS URI for blob: {BlobName}", blobName);
 
-            return sasUri;
+            return Result<string>.Success(sasUri);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating SAS URI for blob {BlobName}", blobName);
-            throw;
+            return Result<string>.Failure($"Error generating SAS URI: {ex.Message}");
         }
     }
 }
