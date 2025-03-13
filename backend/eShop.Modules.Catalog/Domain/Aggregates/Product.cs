@@ -1,10 +1,12 @@
+using eShop.Modules.Catalog.Domain.Events;
 using eShop.Modules.Catalog.Domain.ValueObjects;
+using eShop.Shared.Abstractions.Domain;
 
 namespace eShop.Modules.Catalog.Domain.Aggregates;
 
-public class Product
+public class Product : AggregateRoot
 {
-    public int Id { get; private set; }
+    public override int Id { get; protected set; }
     public ProductName Name { get; private set; }
     public ProductDescription Description { get; private set; }
     public Money Price { get; private set; }
@@ -13,9 +15,9 @@ public class Product
     public ProductCategory Category { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
-
+    
     private Product() { }
-
+    
     private Product(
         ProductName name,
         Money price,
@@ -29,8 +31,9 @@ public class Product
         Description = description;
         ImagePath = imagePath;
         CreatedAt = DateTime.UtcNow;
+        
     }
-
+    
     public static Product Create(
         string name,
         decimal price,
@@ -45,48 +48,53 @@ public class Product
             ProductDescription.Create(description),
             ImagePath.Create(imagePath)
         );
-
+        
         return product;
     }
-
+    
     public void UpdateBasicDetails(string name, string? description, string category)
     {
         Name = ProductName.Create(name);
         Description = ProductDescription.Create(description);
         Category = ProductCategory.Create(category);
         UpdateModifiedDate();
+        
     }
-
+    
     public void UpdatePrice(decimal price)
     {
+        var oldPrice = Price;
         Price = Money.FromDecimal(price);
         UpdateModifiedDate();
+        
     }
-
+    
     public void UpdateImage(string? imagePath)
     {
         ImagePath = ImagePath.Create(imagePath);
         UpdateModifiedDate();
     }
-
+    
     public void Enable()
     {
         if (IsAvailable)
             return;
-
+            
         IsAvailable = true;
         UpdateModifiedDate();
+        
     }
-
+    
     public void Disable()
     {
         if (!IsAvailable)
             return;
-
+            
         IsAvailable = false;
         UpdateModifiedDate();
+        
     }
-
+    
     private void UpdateModifiedDate()
     {
         UpdatedAt = DateTime.UtcNow;
