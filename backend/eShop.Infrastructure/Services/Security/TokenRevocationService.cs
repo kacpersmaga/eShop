@@ -1,10 +1,10 @@
 using eShop.Infrastructure.Data;
-using eShop.Shared.Interfaces.Security;
+using eShop.Shared.Abstractions.Interfaces.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Services.Implementations
+namespace eShop.Infrastructure.Services.Security
 {
     public class TokenRevocationService(
         ApplicationDbContext dbContext,

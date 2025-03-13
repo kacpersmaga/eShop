@@ -1,4 +1,4 @@
-namespace eShop.Shared.Interfaces.Communication;
+namespace eShop.Shared.Abstractions.Interfaces.Communication;
 
 public interface IEmailService
 {

@@ -1,5 +1,5 @@
-using eShop.Models.Domain;
-using eShop.Modules.Catalog.Domain.Entities;
+using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Shared.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,13 +12,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
 
-    public DbSet<ShopItem> ShopItems { get; set; } = null!;
+    public DbSet<Product> ShopItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         
-        builder.Entity<ShopItem>(entity =>
+        builder.Entity<Product>(entity =>
         {
             entity.Property(e => e.Name)
                 .IsRequired()

@@ -1,7 +1,7 @@
 using eShop.Shared.Common;
 using Microsoft.AspNetCore.Http;
 
-namespace eShop.Shared.Interfaces.Storage;
+namespace eShop.Shared.Abstractions.Interfaces.Storage;
 
 public interface IBlobStorageService
 {

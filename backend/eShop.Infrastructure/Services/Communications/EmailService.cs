@@ -1,4 +1,4 @@
-using eShop.Shared.Interfaces.Communication;
+using eShop.Shared.Abstractions.Interfaces.Communication;
 using eShop.Shared.Settings;
 using MailKit.Security;
 using Microsoft.Extensions.Options;

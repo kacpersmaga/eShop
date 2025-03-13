@@ -1,6 +1,6 @@
 using Azure.Storage.Sas;
 
-namespace eShop.Shared.Interfaces.Storage;
+namespace eShop.Shared.Abstractions.Interfaces.Storage;
 
 public interface IBlobStorageServiceWrapper
 {

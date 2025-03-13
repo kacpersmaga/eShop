@@ -1,6 +1,6 @@
-// File: eShop.Modules.Catalog/Application/Services/ItemService.cs - Fixed Variable Conflicts
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
+using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Modules.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -26,7 +26,7 @@ public class ItemService : IItemService
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
-    public async Task<Result<IEnumerable<ShopItem>>> GetAllItems()
+    public async Task<Result<IEnumerable<Product>>> GetAllItems()
     {
         try
         {
@@ -34,8 +34,8 @@ public class ItemService : IItemService
             if (cachedItems is not null)
             {
                 _logger.LogInformation("Returning cached shop items");
-                var cachedResult = JsonSerializer.Deserialize<IEnumerable<ShopItem>>(cachedItems);
-                return Result<IEnumerable<ShopItem>>.Success(cachedResult!);
+                var cachedResult = JsonSerializer.Deserialize<IEnumerable<Product>>(cachedItems);
+                return Result<IEnumerable<Product>>.Success(cachedResult!);
             }
 
             var dbItems = await _itemRepository.GetAllAsync();
@@ -48,16 +48,16 @@ public class ItemService : IItemService
                     AbsoluteExpirationRelativeToNow = _cacheDuration
                 });
 
-            return Result<IEnumerable<ShopItem>>.Success(dbItems);
+            return Result<IEnumerable<Product>>.Success(dbItems);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all shop items from DB or cache");
-            return Result<IEnumerable<ShopItem>>.Failure($"Failed to retrieve items: {ex.Message}");
+            return Result<IEnumerable<Product>>.Failure($"Failed to retrieve items: {ex.Message}");
         }
     }
 
-    public async Task<Result<ShopItem?>> GetItemById(int id)
+    public async Task<Result<Product?>> GetItemById(int id)
     {
         try
         {
@@ -67,14 +67,14 @@ public class ItemService : IItemService
             if (cachedItem is not null)
             {
                 _logger.LogInformation("Returning cached shop item with ID {ItemId}", id);
-                var cachedResult = JsonSerializer.Deserialize<ShopItem>(cachedItem);
-                return Result<ShopItem?>.Success(cachedResult);
+                var cachedResult = JsonSerializer.Deserialize<Product>(cachedItem);
+                return Result<Product?>.Success(cachedResult);
             }
 
             var dbItem = await _itemRepository.GetByIdAsync(id);
             if (dbItem == null)
             {
-                return Result<ShopItem?>.Success(null);
+                return Result<Product?>.Success(null);
             }
 
             await _cache.SetStringAsync(
@@ -85,16 +85,16 @@ public class ItemService : IItemService
                     AbsoluteExpirationRelativeToNow = _cacheDuration
                 });
 
-            return Result<ShopItem?>.Success(dbItem);
+            return Result<Product?>.Success(dbItem);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving shop item with ID {ItemId}", id);
-            return Result<ShopItem?>.Failure($"Failed to retrieve item: {ex.Message}");
+            return Result<Product?>.Failure($"Failed to retrieve item: {ex.Message}");
         }
     }
 
-    public async Task<Result> AddItem(ShopItem item)
+    public async Task<Result> AddItem(Product item)
     {
         try
         {
@@ -116,7 +116,7 @@ public class ItemService : IItemService
         }
     }
 
-    public async Task<Result> UpdateItem(ShopItem item)
+    public async Task<Result> UpdateItem(Product item)
     {
         try
         {

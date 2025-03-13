@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using eShop.Modules.Catalog.Application.Services;
-using eShop.Modules.Catalog.Domain.Entities;
+using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Common;
-using eShop.Shared.Interfaces.Storage;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -42,7 +42,7 @@ public class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<stri
                 uploadedPath = uploadResult.Data;
             }
 
-            var shopItem = _mapper.Map<ShopItem>(request.Model);
+            var shopItem = _mapper.Map<Product>(request.Model);
             shopItem.ImagePath = uploadedPath;
 
             var result = await _itemService.AddItem(shopItem);

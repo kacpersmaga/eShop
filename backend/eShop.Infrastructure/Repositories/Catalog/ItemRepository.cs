@@ -1,4 +1,5 @@
 ﻿using eShop.Infrastructure.Data;
+using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Modules.Catalog.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -17,19 +18,19 @@ public class ItemRepository : IItemRepository
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<IEnumerable<ShopItem>> GetAllAsync()
+    public async Task<IEnumerable<Product>> GetAllAsync()
     {
         _logger.LogInformation("Fetching all items from the database");
         return await _context.ShopItems.AsNoTracking().ToListAsync();
     }
 
-    public async Task<ShopItem?> GetByIdAsync(int id)
+    public async Task<Product?> GetByIdAsync(int id)
     {
         _logger.LogInformation("Fetching item with ID {ItemId} from the database", id);
         return await _context.ShopItems.FindAsync(id);
     }
 
-    public async Task AddAsync(ShopItem item)
+    public async Task AddAsync(Product item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         
@@ -37,7 +38,7 @@ public class ItemRepository : IItemRepository
         await _context.ShopItems.AddAsync(item);
     }
 
-    public async Task UpdateAsync(ShopItem item)
+    public async Task UpdateAsync(Product item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
         

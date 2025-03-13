@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace eShop.Models.Domain;
+namespace eShop.Shared.Infrastructure.Identity;
 public class ApplicationUser : IdentityUser
 {
     public string? TwoFactorType { get; set; }

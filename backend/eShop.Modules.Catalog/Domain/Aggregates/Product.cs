@@ -32,6 +32,7 @@ public class Product : AggregateRoot
         ImagePath = imagePath;
         CreatedAt = DateTime.UtcNow;
         
+        AddDomainEvent(new ProductCreatedDomainEvent(this));
     }
     
     public static Product Create(
@@ -59,6 +60,7 @@ public class Product : AggregateRoot
         Category = ProductCategory.Create(category);
         UpdateModifiedDate();
         
+        AddDomainEvent(new ProductUpdatedDomainEvent(this));
     }
     
     public void UpdatePrice(decimal price)
@@ -67,6 +69,7 @@ public class Product : AggregateRoot
         Price = Money.FromDecimal(price);
         UpdateModifiedDate();
         
+        AddDomainEvent(new ProductPriceChangedDomainEvent(this, oldPrice, Price));
     }
     
     public void UpdateImage(string? imagePath)
@@ -83,6 +86,7 @@ public class Product : AggregateRoot
         IsAvailable = true;
         UpdateModifiedDate();
         
+        AddDomainEvent(new ProductStatusChangedDomainEvent(this, true));
     }
     
     public void Disable()
@@ -93,6 +97,7 @@ public class Product : AggregateRoot
         IsAvailable = false;
         UpdateModifiedDate();
         
+        AddDomainEvent(new ProductStatusChangedDomainEvent(this, false));
     }
     
     private void UpdateModifiedDate()

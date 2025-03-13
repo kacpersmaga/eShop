@@ -1,6 +1,6 @@
 using eShop.Modules.Catalog.Application.Services;
+using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Common;
-using eShop.Shared.Interfaces.Storage;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 

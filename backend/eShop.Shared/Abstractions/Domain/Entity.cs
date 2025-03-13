@@ -1,4 +1,4 @@
-﻿namespace eShop.Shared.Abstractions;
+﻿namespace eShop.Shared.Abstractions.Domain;
 
 public abstract class Entity
 {

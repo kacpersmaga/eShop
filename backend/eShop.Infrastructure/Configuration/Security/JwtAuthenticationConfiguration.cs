@@ -1,6 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using eShop.Shared.Interfaces.Security;
+using eShop.Shared.Abstractions.Interfaces.Security;
 using eShop.Shared.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;

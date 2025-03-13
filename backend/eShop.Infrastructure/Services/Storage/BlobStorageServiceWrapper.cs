@@ -1,7 +1,7 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
-using eShop.Shared.Interfaces.Storage;
+using eShop.Shared.Abstractions.Interfaces.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Infrastructure.Services.Storage;

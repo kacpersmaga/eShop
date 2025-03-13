@@ -1,6 +1,6 @@
 using Azure.Storage.Sas;
+using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Common;
-using eShop.Shared.Interfaces.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

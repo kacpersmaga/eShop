@@ -1,4 +1,4 @@
-namespace eShop.Shared.Interfaces.Security;
+namespace eShop.Shared.Abstractions.Interfaces.Security;
 
 public interface ITokenRevocationService
 {
