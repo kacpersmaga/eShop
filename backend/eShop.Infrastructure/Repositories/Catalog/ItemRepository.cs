@@ -1,18 +1,17 @@
 ﻿using eShop.Infrastructure.Data;
 using eShop.Modules.Catalog.Domain.Aggregates;
-using eShop.Modules.Catalog.Domain.Entities;
 using eShop.Modules.Catalog.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Infrastructure.Repositories.Catalog;
 
-public class ItemRepository : IItemRepository
+public class ProductRepository : IProductRepository
 {
     private readonly ApplicationDbContext _context;
-    private readonly ILogger<ItemRepository> _logger;
+    private readonly ILogger<ProductRepository> _logger;
 
-    public ItemRepository(ApplicationDbContext context, ILogger<ItemRepository> logger)
+    public ProductRepository(ApplicationDbContext context, ILogger<ProductRepository> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -20,48 +19,52 @@ public class ItemRepository : IItemRepository
 
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        _logger.LogInformation("Fetching all items from the database");
-        return await _context.ShopItems.AsNoTracking().ToListAsync();
+        _logger.LogInformation("Fetching all products from the database");
+        return await _context.Products.AsNoTracking().ToListAsync();
     }
 
     public async Task<Product?> GetByIdAsync(int id)
     {
-        _logger.LogInformation("Fetching item with ID {ItemId} from the database", id);
-        return await _context.ShopItems.FindAsync(id);
+        _logger.LogInformation("Fetching product with ID {ProductId} from the database", id);
+        return await _context.Products.FindAsync(id);
     }
 
-    public async Task AddAsync(Product item)
+    public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
     {
-        if (item == null) throw new ArgumentNullException(nameof(item));
-        
-        _logger.LogInformation("Adding a new item: {@Item}", item);
-        await _context.ShopItems.AddAsync(item);
+        _logger.LogInformation("Fetching products in category '{Category}' from the database", category);
+        return await _context.Products
+            .Where(p => p.Category.Value == category && p.IsAvailable)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
-    public async Task UpdateAsync(Product item)
+    public async Task AddAsync(Product product)
     {
-        if (item == null) throw new ArgumentNullException(nameof(item));
+        if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Updating item with ID {ItemId}: {@Item}", item.Id, item);
-        
-        _context.Entry(item).State = EntityState.Modified;
-        item.UpdatedAt = DateTime.UtcNow;
+        _logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
+        await _context.Products.AddAsync(product);
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task UpdateAsync(Product product)
     {
-        _logger.LogInformation("Deleting item with ID {ItemId}", id);
+        if (product == null) throw new ArgumentNullException(nameof(product));
         
-        var item = await _context.ShopItems.FindAsync(id);
-        if (item != null)
-        {
-            _context.ShopItems.Remove(item);
-        }
+        _logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
+        
+        _context.Entry(product).State = EntityState.Modified;
     }
 
-    public async Task SaveChangesAsync()
+    public async Task DeleteAsync(Product product)
     {
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Changes saved to database");
+        if (product == null) throw new ArgumentNullException(nameof(product));
+        
+        _logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
+        _context.Products.Remove(product);
+    }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Products.AnyAsync(p => p.Id == id);
     }
 }

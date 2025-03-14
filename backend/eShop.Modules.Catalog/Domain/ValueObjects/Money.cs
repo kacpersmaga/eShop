@@ -1,6 +1,6 @@
 ﻿namespace eShop.Modules.Catalog.Domain.ValueObjects;
 
-public readonly record struct Money
+public sealed record Money
 {
     public decimal Value { get; }
     public string Currency { get; }
