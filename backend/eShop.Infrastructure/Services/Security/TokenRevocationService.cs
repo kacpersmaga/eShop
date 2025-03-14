@@ -1,4 +1,4 @@
-using eShop.Infrastructure.Data;
+using eShop.Modules.Catalog.Infrastructure.Persistence;
 using eShop.Shared.Abstractions.Interfaces.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;

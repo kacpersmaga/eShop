@@ -5,7 +5,7 @@ using eShop.Modules.Catalog.Domain.Aggregates;
 
 namespace eShop.Modules.Catalog.Application.Mapping;
 
-public class ImageUriResolver : IValueResolver<Product, ShopItemViewModel, string?>
+public class ImageUriResolver : IValueResolver<Product, ProductDto, string?>
 {
     private readonly IImageService _imageService;
 
@@ -14,9 +14,11 @@ public class ImageUriResolver : IValueResolver<Product, ShopItemViewModel, strin
         _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
     }
 
-    public string? Resolve(Product source, ShopItemViewModel destination, string? destMember, ResolutionContext context)
+    public string? Resolve(Product source, ProductDto destination, string? destMember, ResolutionContext context)
     {
-        var result = _imageService.GetImageUri(source.ImagePath ?? "default.jpg");
+        var imagePath = source.ImagePath?.Value;
+        
+        var result = _imageService.GetImageUri(imagePath ?? "default.jpg");
         return result.Succeeded ? result.Data : "/images/default.jpg";
     }
 }

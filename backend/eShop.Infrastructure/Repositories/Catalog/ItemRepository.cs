@@ -1,6 +1,6 @@
-﻿using eShop.Infrastructure.Data;
-using eShop.Modules.Catalog.Domain.Aggregates;
+﻿using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Repositories;
+using eShop.Modules.Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

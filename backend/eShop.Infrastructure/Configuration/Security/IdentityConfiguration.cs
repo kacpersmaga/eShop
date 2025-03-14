@@ -1,4 +1,4 @@
-﻿using eShop.Infrastructure.Data;
+﻿using eShop.Modules.Catalog.Infrastructure.Persistence;
 using eShop.Shared.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;

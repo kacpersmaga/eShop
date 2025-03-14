@@ -8,7 +8,7 @@ public static class ServicesConfiguration
 {
     public static IServiceCollection AddCatalogServices(this IServiceCollection services)
     {
-        services.AddScoped<IItemService, ItemService>();
+        services.AddScoped<IItemService, IProductService>();
         
         services.AddAutoMapper(typeof(ShopItemMappingProfile).Assembly);
         

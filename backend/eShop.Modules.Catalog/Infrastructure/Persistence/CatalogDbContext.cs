@@ -2,13 +2,13 @@ using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
-namespace eShop.Infrastructure.Data;
+namespace eShop.Modules.Catalog.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext
+public class CatalogDbContext : DbContext
 {
     public DbSet<Product> Products { get; set; }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options)
     {
     }
 

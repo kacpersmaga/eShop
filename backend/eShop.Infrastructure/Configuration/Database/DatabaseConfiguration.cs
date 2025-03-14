@@ -1,4 +1,4 @@
-﻿using eShop.Infrastructure.Data;
+﻿using eShop.Modules.Catalog.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
