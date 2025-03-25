@@ -5,4 +5,4 @@ using Microsoft.AspNetCore.Http;
 
 namespace eShop.Modules.Catalog.Commands;
 
-public record AddItemCommand(ShopItemFormModel Model, IFormFile? Image) : IRequest<Result<string>>;
+public record AddItemCommand(CreateProductDto Model, IFormFile? Image) : IRequest<Result<string>>;

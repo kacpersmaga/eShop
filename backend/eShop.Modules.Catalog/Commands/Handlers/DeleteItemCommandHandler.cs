@@ -1,4 +1,5 @@
-﻿using eShop.Modules.Catalog.Application.Services;
+﻿using eShop.Modules.Catalog.Domain.Repositories;
+using eShop.Modules.Catalog.Infrastructure;
 using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Common;
 using MediatR;
@@ -8,16 +9,19 @@ namespace eShop.Modules.Catalog.Commands.Handlers;
 
 public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Result<string>>
 {
-    private readonly IItemService _itemService;
+    private readonly IProductRepository _productRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobStorageService _blobService;
     private readonly ILogger<DeleteItemCommandHandler> _logger;
 
     public DeleteItemCommandHandler(
-        IItemService itemService,
+        IProductRepository productRepository,
+        IUnitOfWork unitOfWork,
         IBlobStorageService blobService,
         ILogger<DeleteItemCommandHandler> logger)
     {
-        _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
+        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -26,41 +30,32 @@ public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Resul
     {
         try
         {
-            var itemResult = await _itemService.GetItemById(request.ItemId);
-            if (!itemResult.Succeeded)
+            var product = await _productRepository.GetByIdAsync(request.ItemId);
+            if (product == null)
             {
-                return Result<string>.Failure(itemResult.Errors);
-            }
-
-            var item = itemResult.Data;
-            if (item == null)
-            {
-                return Result<string>.Failure($"Item with ID {request.ItemId} not found.");
+                _logger.LogWarning("Product with ID {ProductId} not found for deletion", request.ItemId);
+                return Result<string>.Failure($"Product with ID {request.ItemId} not found.");
             }
             
-            if (!string.IsNullOrEmpty(item.ImagePath) && !item.ImagePath.Contains("default"))
+            if (product.ImagePath?.Value != null && !product.ImagePath.Value.Contains("default"))
             {
-                var deleteResult = await _blobService.DeleteFileAsync(item.ImagePath);
+                var deleteResult = await _blobService.DeleteFileAsync(product.ImagePath.Value);
                 if (!deleteResult.Succeeded)
                 {
                     _logger.LogWarning("Failed to delete image: {Errors}", string.Join(", ", deleteResult.Errors));
                 }
             }
-
-            var result = await _itemService.DeleteItem(request.ItemId);
-            if (!result.Succeeded)
-            {
-                return Result<string>.Failure(result.Errors);
-            }
             
-            _logger.LogInformation("Item with ID {Id} deleted successfully.", request.ItemId);
-
-            return Result<string>.Success($"Item deleted successfully!");
+            await _productRepository.DeleteAsync(product);
+            await _unitOfWork.SaveChangesAsync();
+            
+            _logger.LogInformation("Product with ID {Id} deleted successfully.", request.ItemId);
+            return Result<string>.Success("Product deleted successfully");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to delete item with ID {ItemId}", request.ItemId);
-            return Result<string>.Failure($"Failed to delete item: {ex.Message}");
+            _logger.LogError(ex, "Failed to delete product with ID {ItemId}", request.ItemId);
+            return Result<string>.Failure($"Failed to delete product: {ex.Message}");
         }
     }
 }

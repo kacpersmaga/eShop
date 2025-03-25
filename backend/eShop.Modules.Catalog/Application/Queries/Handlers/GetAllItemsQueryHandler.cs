@@ -7,39 +7,43 @@ using Microsoft.Extensions.Logging;
 
 namespace eShop.Modules.Catalog.Application.Queries.Handlers;
 
-public class GetAllItemsQueryHandler : IRequestHandler<GetAllItemsQuery, Result<List<ShopItemViewModel>>>
+public class GetAllItemsQueryHandler : IRequestHandler<GetAllItemsQuery, Result<List<ProductDto>>>
 {
-    private readonly IItemService _itemService;
+    private readonly IProductService _productService;
     private readonly IMapper _mapper;
     private readonly ILogger<GetAllItemsQueryHandler> _logger;
 
     public GetAllItemsQueryHandler(
-        IItemService itemService,
+        IProductService productService,
         IMapper mapper,
         ILogger<GetAllItemsQueryHandler> logger)
     {
-        _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
+        _productService = productService ?? throw new ArgumentNullException(nameof(productService));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<List<ShopItemViewModel>>> Handle(GetAllItemsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<ProductDto>>> Handle(GetAllItemsQuery request, CancellationToken cancellationToken)
     {
         try
         {
             _logger.LogInformation("Handling GetAllItemsQuery in Catalog module...");
             
-            var items = await _itemService.GetAllItems();
-            var itemDtos = _mapper.Map<List<ShopItemViewModel>>(items);
+            var result = await _productService.GetAllProductsAsync();
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to fetch products: {Errors}", string.Join(", ", result.Errors));
+                return Result<List<ProductDto>>.Failure(result.Errors);
+            }
             
-            _logger.LogInformation("Successfully fetched {Count} items.", itemDtos.Count);
+            _logger.LogInformation("Successfully fetched {Count} products.", result.Data?.Count ?? 0);
             
-            return Result<List<ShopItemViewModel>>.Success(itemDtos);
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching items");
-            return Result<List<ShopItemViewModel>>.Failure($"Failed to retrieve items: {ex.Message}");
+            _logger.LogError(ex, "Error fetching products");
+            return Result<List<ProductDto>>.Failure($"Failed to retrieve products: {ex.Message}");
         }
     }
 }

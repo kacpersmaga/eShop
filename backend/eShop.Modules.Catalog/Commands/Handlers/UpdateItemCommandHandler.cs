@@ -1,5 +1,5 @@
-﻿using AutoMapper;
-using eShop.Modules.Catalog.Application.Services;
+﻿using eShop.Modules.Catalog.Domain.Repositories;
+using eShop.Modules.Catalog.Infrastructure;
 using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Common;
 using MediatR;
@@ -9,20 +9,20 @@ namespace eShop.Modules.Catalog.Commands.Handlers;
 
 public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Result<string>>
 {
-    private readonly IItemService _itemService;
+    private readonly IProductRepository _productRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobStorageService _blobService;
-    private readonly IMapper _mapper;
     private readonly ILogger<UpdateItemCommandHandler> _logger;
 
     public UpdateItemCommandHandler(
-        IItemService itemService,
+        IProductRepository productRepository,
+        IUnitOfWork unitOfWork,
         IBlobStorageService blobService,
-        IMapper mapper,
         ILogger<UpdateItemCommandHandler> logger)
     {
-        _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
+        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -30,25 +30,18 @@ public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Resul
     {
         try
         {
-            var itemResult = await _itemService.GetItemById(request.ItemId);
-            if (!itemResult.Succeeded)
+            var product = await _productRepository.GetByIdAsync(request.ItemId);
+            if (product == null)
             {
-                return Result<string>.Failure(itemResult.Errors);
+                _logger.LogWarning("Product with ID {ProductId} not found", request.ItemId);
+                return Result<string>.Failure($"Product with ID {request.ItemId} not found.");
             }
-
-            var existingItem = itemResult.Data;
-            if (existingItem == null)
-            {
-                return Result<string>.Failure($"Item with ID {request.ItemId} not found.");
-            }
-            
-            _mapper.Map(request.Model, existingItem);
             
             if (request.Image is { Length: > 0 })
             {
-                if (!string.IsNullOrEmpty(existingItem.ImagePath) && !existingItem.ImagePath.Contains("default"))
+                if (product.ImagePath?.Value != null && !product.ImagePath.Value.Contains("default"))
                 {
-                    var deleteResult = await _blobService.DeleteFileAsync(existingItem.ImagePath);
+                    var deleteResult = await _blobService.DeleteFileAsync(product.ImagePath.Value);
                     if (!deleteResult.Succeeded)
                     {
                         _logger.LogWarning("Failed to delete old image: {Errors}", string.Join(", ", deleteResult.Errors));
@@ -61,23 +54,27 @@ public class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Resul
                     return Result<string>.Failure(uploadResult.Errors);
                 }
                 
-                existingItem.ImagePath = uploadResult.Data;
-            }
-
-            var updateResult = await _itemService.UpdateItem(existingItem);
-            if (!updateResult.Succeeded)
-            {
-                return Result<string>.Failure(updateResult.Errors);
+                product.UpdateImage(uploadResult.Data);
             }
             
-            _logger.LogInformation("Item '{Name}' with ID {Id} updated successfully.", existingItem.Name, request.ItemId);
-
-            return Result<string>.Success($"Item '{existingItem.Name}' updated successfully!");
+            product.UpdateBasicDetails(
+                request.Model.Name,
+                request.Model.Description,
+                request.Model.Category
+            );
+            
+            product.UpdatePrice(request.Model.Price);
+            
+            await _productRepository.UpdateAsync(product);
+            await _unitOfWork.SaveChangesAsync();
+            
+            _logger.LogInformation("Product with ID {Id} updated successfully", request.ItemId);
+            return Result<string>.Success($"Product '{request.Model.Name}' updated successfully!");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update item with ID {ItemId}", request.ItemId);
-            return Result<string>.Failure($"Failed to update item: {ex.Message}");
+            _logger.LogError(ex, "Failed to update product with ID {ItemId}", request.ItemId);
+            return Result<string>.Failure($"Failed to update product: {ex.Message}");
         }
     }
 }

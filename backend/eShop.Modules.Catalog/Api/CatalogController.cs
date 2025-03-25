@@ -24,12 +24,12 @@ public class CatalogController : ControllerBase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    [HttpGet("items")]
-    public async Task<IActionResult> GetItems()
+    [HttpGet("products")]
+    public async Task<IActionResult> GetProducts()
     {
         try
         {
-            _logger.LogInformation("Executing GetItems query...");
+            _logger.LogInformation("Executing GetAllItemsQuery query...");
             var result = await _mediator.Send(new GetAllItemsQuery());
             
             if (result.Succeeded)
@@ -41,17 +41,17 @@ public class CatalogController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching items.");
+            _logger.LogError(ex, "Error occurred while fetching products.");
             return StatusCode(500, Result.Failure("An error occurred while processing your request."));
         }
     }
 
-    [HttpGet("items/{id}")]
-    public async Task<IActionResult> GetItemById(int id)
+    [HttpGet("products/{id}")]
+    public async Task<IActionResult> GetProductById(int id)
     {
         try
         {
-            _logger.LogInformation("Executing GetItemById query for ID {ItemId}...", id);
+            _logger.LogInformation("Executing GetItemByIdQuery query for ID {ProductId}...", id);
             var result = await _mediator.Send(new GetItemByIdQuery(id));
             
             if (result.Succeeded)
@@ -63,17 +63,17 @@ public class CatalogController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching item with ID {ItemId}.", id);
+            _logger.LogError(ex, "Error occurred while fetching product with ID {ProductId}.", id);
             return StatusCode(500, Result.Failure("An error occurred while processing your request."));
         }
     }
 
-    [HttpPost("items")]
-    public async Task<IActionResult> AddItem([FromForm] ShopItemFormModel model, [FromForm] IFormFile? image)
+    [HttpPost("products")]
+    public async Task<IActionResult> AddProduct([FromForm] CreateProductDto model, [FromForm] IFormFile? image)
     {
         try
         {
-            _logger.LogInformation("Executing AddItem command...");
+            _logger.LogInformation("Executing AddItemCommand command...");
             var result = await _mediator.Send(new AddItemCommand(model, image));
             
             if (result.Succeeded)
@@ -85,17 +85,17 @@ public class CatalogController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while adding item {Name}", model.Name);
+            _logger.LogError(ex, "Error occurred while adding product {Name}", model.Name);
             return StatusCode(500, Result.Failure("An error occurred while processing your request."));
         }
     }
 
-    [HttpPut("items/{id}")]
-    public async Task<IActionResult> UpdateItem(int id, [FromForm] ShopItemFormModel model, [FromForm] IFormFile? image)
+    [HttpPut("products/{id}")]
+    public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDto model, [FromForm] IFormFile? image)
     {
         try
         {
-            _logger.LogInformation("Executing UpdateItem command for ID {ItemId}...", id);
+            _logger.LogInformation("Executing UpdateItemCommand command for ID {ProductId}...", id);
             var result = await _mediator.Send(new UpdateItemCommand(id, model, image));
             
             if (result.Succeeded)
@@ -109,17 +109,17 @@ public class CatalogController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while updating item with ID {ItemId}.", id);
+            _logger.LogError(ex, "Error occurred while updating product with ID {ProductId}.", id);
             return StatusCode(500, Result.Failure("An error occurred while processing your request."));
         }
     }
 
-    [HttpDelete("items/{id}")]
-    public async Task<IActionResult> DeleteItem(int id)
+    [HttpDelete("products/{id}")]
+    public async Task<IActionResult> DeleteProduct(int id)
     {
         try
         {
-            _logger.LogInformation("Executing DeleteItem command for ID {ItemId}...", id);
+            _logger.LogInformation("Executing DeleteItemCommand command for ID {ProductId}...", id);
             var result = await _mediator.Send(new DeleteItemCommand(id));
             
             if (result.Succeeded)
@@ -133,7 +133,7 @@ public class CatalogController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while deleting item with ID {ItemId}.", id);
+            _logger.LogError(ex, "Error occurred while deleting product with ID {ProductId}.", id);
             return StatusCode(500, Result.Failure("An error occurred while processing your request."));
         }
     }

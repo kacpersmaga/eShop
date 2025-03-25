@@ -8,10 +8,9 @@ public static class ServicesConfiguration
 {
     public static IServiceCollection AddCatalogServices(this IServiceCollection services)
     {
-        services.AddScoped<IItemService, IProductService>();
+        services.AddScoped<IProductService, ProductService>();
         
-        services.AddAutoMapper(typeof(ShopItemMappingProfile).Assembly);
-        
+        services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
         
         return services;
     }
