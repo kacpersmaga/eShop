@@ -8,38 +8,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 try
 {
-    // Configure environment and logging
     builder.ConfigureEnvironment<eShop.Host.Program>();
     builder.Host.ConfigureSerilog();
+    
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
-    // Register shared services
     builder.Services.AddSharedServices(builder.Configuration);
-    
-    // Register infrastructure services
     builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
-    
-    // Register module services
     builder.Services.AddCatalogModule(builder.Configuration);
-    
+
     var app = builder.Build();
 
-    // Configure database
     if (!builder.Environment.IsEnvironment("Test"))
     {
         app.ApplyDatabaseMigrations();
     }
     
-    // Configure middleware pipeline
+    if (builder.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
     app.UseSharedMiddlewares();
-    
-    // Configure module endpoints
-    // app.MapAuthEndpoints();
-    // app.MapCatalogEndpoints();
-    // app.MapPaymentEndpoints();
-    // app.MapAdminEndpoints();
+    app.MapCatalogEndpoints();
 
     app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
-
     app.Run();
 }
 catch (Exception ex) when (ex is not HostAbortedException && ex.Source != "Microsoft.EntityFrameworkCore.Design")

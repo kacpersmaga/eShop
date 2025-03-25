@@ -26,7 +26,6 @@
     <ItemGroup>
       <Folder Include="Configuration\Communication\" />
       <Folder Include="Data\" />
-      <Folder Include="Migrations\" />
       <Folder Include="Services\Communications\" />
       <Folder Include="Services\Implementations\" />
       <Folder Include="Services\Interfaces\" />
