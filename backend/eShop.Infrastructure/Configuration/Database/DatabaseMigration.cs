@@ -14,8 +14,16 @@ public static class DatabaseMigration
         var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("DatabaseMigration");
 
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.Migrate();
-        logger.LogInformation("Migrations applied successfully.");
+        try
+        {
+            var catalogDbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            catalogDbContext.Database.Migrate();
+            logger.LogInformation("CatalogDbContext migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while migrating the CatalogDbContext database.");
+            throw;
+        }
     }
 }

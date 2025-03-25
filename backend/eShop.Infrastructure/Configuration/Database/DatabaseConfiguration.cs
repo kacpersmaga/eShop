@@ -19,7 +19,7 @@ public static class DatabaseConfiguration
         var connectionString = configuration.GetConnectionString(connectionStringName)
                                ?? throw new InvalidOperationException("Database connection string is not configured.");
     
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<CatalogDbContext>(options =>
             options.UseSqlServer(connectionString));
 
         return services;

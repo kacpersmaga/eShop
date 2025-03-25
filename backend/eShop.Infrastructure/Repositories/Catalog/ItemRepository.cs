@@ -8,10 +8,10 @@ namespace eShop.Infrastructure.Repositories.Catalog;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly ApplicationDbContext _context;
+    private readonly CatalogDbContext _context;
     private readonly ILogger<ProductRepository> _logger;
 
-    public ProductRepository(ApplicationDbContext context, ILogger<ProductRepository> logger)
+    public ProductRepository(CatalogDbContext context, ILogger<ProductRepository> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

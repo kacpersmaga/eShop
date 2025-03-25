@@ -1,5 +1,4 @@
 ﻿using eShop.Infrastructure.Configuration.Caching;
-using eShop.Infrastructure.Configuration.Communication;
 using eShop.Infrastructure.Configuration.Database;
 using eShop.Infrastructure.Configuration.Repositories;
 using eShop.Infrastructure.Configuration.Security;
@@ -25,9 +24,7 @@ public static class InfrastructureConfiguration
         }
 
         services.ConfigureRedis(configuration);
-        services.ConfigureIdentity();
         services.ConfigureJwtAuthentication(configuration);
-        services.ConfigureEmailAndSms(configuration);
         services.ConfigureRepositories();
 
         return services;
