@@ -1,9 +1,8 @@
 ﻿using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Application.Queries;
 using eShop.Modules.Catalog.Commands;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -69,49 +68,34 @@ public class CatalogController : ControllerBase
     }
 
     [HttpPost("products")]
-    public async Task<IActionResult> AddProduct([FromForm] CreateProductDto model, [FromForm] IFormFile? image)
+    public async Task<IActionResult> AddProduct([FromForm] CreateProductDto form)
     {
-        try
+        var dto = new CreateProductDto
         {
-            _logger.LogInformation("Executing AddItemCommand command...");
-            var result = await _mediator.Send(new AddItemCommand(model, image));
-            
-            if (result.Succeeded)
-            {
-                return Ok(result);
-            }
-            
-            return BadRequest(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while adding product {Name}", model.Name);
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
-        }
+            Name = form.Name,
+            Price = form.Price,
+            Category = form.Category,
+            Description = form.Description
+        };
+
+        var result = await _mediator.Send(new AddItemCommand(dto, form.Image));
+        return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpPut("products/{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDto model, [FromForm] IFormFile? image)
+    public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDto form)
     {
-        try
+        var dto = new UpdateProductDto
         {
-            _logger.LogInformation("Executing UpdateItemCommand command for ID {ProductId}...", id);
-            var result = await _mediator.Send(new UpdateItemCommand(id, model, image));
-            
-            if (result.Succeeded)
-            {
-                return Ok(result);
-            }
-            
-            return result.Errors.Any(e => e.Contains("not found")) 
-                ? NotFound(result) 
-                : BadRequest(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while updating product with ID {ProductId}.", id);
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
-        }
+            Name = form.Name,
+            Price = form.Price,
+            Category = form.Category,
+            Description = form.Description
+        };
+
+        var result = await _mediator.Send(new UpdateItemCommand(id, dto, form.Image));
+        return result.Succeeded ? Ok(result) :
+            result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
     }
 
     [HttpDelete("products/{id}")]

@@ -22,7 +22,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\eShop.Infrastructure\eShop.Infrastructure.csproj" />
-      <ProjectReference Include="..\eShop.Modules.Auth\eShop.Modules.Auth.csproj" />
       <ProjectReference Include="..\eShop.Shared\eShop.Shared.csproj" />
     </ItemGroup>
 

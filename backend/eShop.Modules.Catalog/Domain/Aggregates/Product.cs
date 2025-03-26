@@ -7,12 +7,12 @@ namespace eShop.Modules.Catalog.Domain.Aggregates;
 public class Product : AggregateRoot
 {
     public override int Id { get; protected set; }
-    public ProductName Name { get; private set; }
-    public ProductDescription Description { get; private set; }
-    public Money Price { get; private set; }
+    public ProductName Name { get; private set; } = null!;
+    public ProductDescription Description { get; private set; } = null!;
+    public Money Price { get; private set; } = null!;
     public bool IsAvailable { get; private set; } = true;
-    public ImagePath ImagePath { get; private set; }
-    public ProductCategory Category { get; private set; }
+    public ImagePath ImagePath { get; private set; } = null!;
+    public ProductCategory Category { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     

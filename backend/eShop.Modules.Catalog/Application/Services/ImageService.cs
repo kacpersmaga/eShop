@@ -1,6 +1,5 @@
-using eShop.Modules.Catalog.Application.Services;
 using eShop.Shared.Abstractions.Interfaces.Storage;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
@@ -50,13 +49,13 @@ public class ImageService : IImageService
             }
 
             var imageUri = uriResult.Data;
-            _cache.SetString(imagePath, imageUri, new DistributedCacheEntryOptions
+            _cache.SetString(imagePath, imageUri!, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
             });
             _logger.LogInformation("Image URI cached for imagePath: {ImagePath}", imagePath);
 
-            return Result<string>.Success(imageUri);
+            return Result<string>.Success(imageUri!);
         }
         catch (Exception ex)
         {

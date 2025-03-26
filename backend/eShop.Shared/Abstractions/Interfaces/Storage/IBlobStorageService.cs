@@ -1,4 +1,4 @@
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using Microsoft.AspNetCore.Http;
 
 namespace eShop.Shared.Abstractions.Interfaces.Storage;

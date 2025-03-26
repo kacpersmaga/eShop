@@ -1,7 +1,6 @@
 ﻿using eShop.Infrastructure.Configuration.Caching;
 using eShop.Infrastructure.Configuration.Database;
 using eShop.Infrastructure.Configuration.Repositories;
-using eShop.Infrastructure.Configuration.Security;
 using eShop.Infrastructure.Configuration.Storage;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +23,6 @@ public static class InfrastructureConfiguration
         }
 
         services.ConfigureRedis(configuration);
-        services.ConfigureJwtAuthentication(configuration);
         services.ConfigureRepositories();
 
         return services;

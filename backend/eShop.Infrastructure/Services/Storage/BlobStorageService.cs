@@ -1,6 +1,6 @@
 using Azure.Storage.Sas;
 using eShop.Shared.Abstractions.Interfaces.Storage;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -30,10 +30,6 @@ public class BlobStorageService : IBlobStorageService
     {
         try
         {
-            if (file == null)
-            {
-                return Result<string>.Failure("File cannot be null.");
-            }
 
             if (file.Length == 0)
             {
@@ -56,7 +52,7 @@ public class BlobStorageService : IBlobStorageService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading file {FileName}", file?.FileName);
+            _logger.LogError(ex, "Error uploading file {FileName}", file.FileName);
             return Result<string>.Failure($"Error uploading file: {ex.Message}");
         }
     }

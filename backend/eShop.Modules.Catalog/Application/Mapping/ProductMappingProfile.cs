@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Domain.Aggregates;
-using eShop.Modules.Catalog.Domain.ValueObjects;
 
 namespace eShop.Modules.Catalog.Application.Mapping;
 
@@ -10,7 +9,7 @@ public class ProductMappingProfile : Profile
     public ProductMappingProfile()
     {
         CreateMap<CreateProductDto, Product>()
-            .ConvertUsing((src, _, context) => Product.Create(
+            .ConvertUsing((src, _) => Product.Create(
                 name: src.Name,
                 price: src.Price,
                 category: src.Category,
@@ -19,7 +18,7 @@ public class ProductMappingProfile : Profile
             ));
         
         CreateMap<UpdateProductDto, Product>()
-            .ForAllMembers(opts => opts.Ignore()); // Updates are handled via domain methods
+            .ForAllMembers(opts => opts.Ignore());
         
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.Value))

@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Shared", "eShop.Share
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Infrastructure", "eShop.Infrastructure\eShop.Infrastructure.csproj", "{5F344397-5F32-4941-882E-6BFEC6E10C21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Modules.Auth", "eShop.Modules.Auth\eShop.Modules.Auth.csproj", "{F5703E59-C6C5-443D-AF0E-D46FA1B52E6A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Modules.Catalog", "eShop.Modules.Catalog\eShop.Modules.Catalog.csproj", "{02DFDA20-2195-4323-9388-E8ACABEE7052}"
 EndProject
 Global
@@ -33,10 +31,6 @@ Global
 		{5F344397-5F32-4941-882E-6BFEC6E10C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F344397-5F32-4941-882E-6BFEC6E10C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F344397-5F32-4941-882E-6BFEC6E10C21}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F5703E59-C6C5-443D-AF0E-D46FA1B52E6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F5703E59-C6C5-443D-AF0E-D46FA1B52E6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F5703E59-C6C5-443D-AF0E-D46FA1B52E6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F5703E59-C6C5-443D-AF0E-D46FA1B52E6A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Release|Any CPU.ActiveCfg = Release|Any CPU

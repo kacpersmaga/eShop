@@ -1,7 +1,7 @@
 ﻿using eShop.Modules.Catalog.Domain.Repositories;
 using eShop.Modules.Catalog.Infrastructure;
 using eShop.Shared.Abstractions.Interfaces.Storage;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -37,7 +37,7 @@ public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Resul
                 return Result<string>.Failure($"Product with ID {request.ItemId} not found.");
             }
             
-            if (product.ImagePath?.Value != null && !product.ImagePath.Value.Contains("default"))
+            if (product.ImagePath.Value != null && !product.ImagePath.Value.Contains("default"))
             {
                 var deleteResult = await _blobService.DeleteFileAsync(product.ImagePath.Value);
                 if (!deleteResult.Succeeded)

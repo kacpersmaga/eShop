@@ -1,5 +1,7 @@
-﻿using eShop.Shared.Middlewares;
+﻿using eShop.Extensions.Middlewares;
+using eShop.Shared.Middlewares;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
 
 namespace eShop.Shared.Configuration;
 
@@ -7,14 +9,14 @@ public static class MiddlewareConfiguration
 {
     public static WebApplication UseSharedMiddlewares(this WebApplication app)
     {
-        // Add middleware to handle exceptions
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         
-        // Add rate limiting middleware
         app.UseMiddleware<RateLimitingMiddleware>();
         
-        // Add CSRF protection middleware
-        app.UseMiddleware<CsrfProtectionMiddleware>();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseMiddleware<CsrfProtectionMiddleware>();
+        }
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();

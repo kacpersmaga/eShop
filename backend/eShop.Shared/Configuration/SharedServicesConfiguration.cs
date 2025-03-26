@@ -12,33 +12,23 @@ public static class SharedServicesConfiguration
 {
     public static IServiceCollection AddSharedServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add validation
-        services.AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
-        
-        // Configure validation error response
-        services.ConfigureApiBehavior();
-        
-        // Configure rate limiting
-        services.Configure<RateLimitingSettings>(configuration.GetSection("RateLimiting"));
-        services.AddMemoryCache();
-        
-        // Configure CSRF protection
-        services.Configure<CsrfSettings>(configuration.GetSection("CsrfSettings"));
-        services.AddAntiforgery(options =>
-        {
-            options.HeaderName = configuration["CsrfSettings:HeaderName"] ?? "X-CSRF-TOKEN";
-            options.Cookie.HttpOnly = false;
-            options.Cookie.SameSite = SameSiteMode.Strict;
-            options.Cookie.SecurePolicy = 
-                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" 
-                    ? CookieSecurePolicy.SameAsRequest 
-                    : CookieSecurePolicy.Always;
-        });
-        
-        // Add AutoMapper
-        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-        
-        return services;
+        return services
+            .AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies())
+            .ConfigureApiBehavior()
+            .Configure<RateLimitingSettings>(configuration.GetSection("RateLimiting"))
+            .AddMemoryCache()
+            .Configure<CsrfSettings>(configuration.GetSection("CsrfSettings"))
+            .AddAntiforgery(options =>
+            {
+                options.HeaderName = configuration["CsrfSettings:HeaderName"] ?? "X-CSRF-TOKEN";
+                options.Cookie.HttpOnly = false;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy =
+                    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+                        ? CookieSecurePolicy.SameAsRequest
+                        : CookieSecurePolicy.Always;
+            })
+            .AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
     }
     
     private static IServiceCollection ConfigureApiBehavior(this IServiceCollection services)

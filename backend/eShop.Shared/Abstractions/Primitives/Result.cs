@@ -1,4 +1,4 @@
-﻿namespace eShop.Shared.Common;
+﻿namespace eShop.Shared.Abstractions.Primitives;
 
 public class Result
 {

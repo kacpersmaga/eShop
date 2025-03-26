@@ -1,10 +1,8 @@
-﻿using eShop.Modules.Catalog.Application.Dtos;
-using eShop.Modules.Catalog.Commands;
-using eShop.Modules.Catalog.Domain.Aggregates;
+﻿using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Repositories;
 using eShop.Modules.Catalog.Infrastructure;
 using eShop.Shared.Abstractions.Interfaces.Storage;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -62,7 +60,7 @@ public class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<stri
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to add product {Name}", request.Model?.Name);
+            _logger.LogError(ex, "Failed to add product {Name}", request.Model.Name);
             return Result<string>.Failure($"Failed to add product: {ex.Message}");
         }
     }

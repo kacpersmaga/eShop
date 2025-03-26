@@ -1,6 +1,6 @@
 using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Domain.Aggregates;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 
 namespace eShop.Modules.Catalog.Application.Services;
 

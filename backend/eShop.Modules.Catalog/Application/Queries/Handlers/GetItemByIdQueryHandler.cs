@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Application.Services;
-using eShop.Shared.Common;
+using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

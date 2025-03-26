@@ -34,8 +34,8 @@
 
   eshop:
     build:
-      context: .
-      dockerfile: eShop/Dockerfile
+      context: ./backend/eShop.Host
+      dockerfile: Dockerfile
     container_name: eshop-app
     ports:
       - "8080:8080"

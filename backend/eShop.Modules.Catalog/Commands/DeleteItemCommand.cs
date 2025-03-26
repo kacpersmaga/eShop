@@ -1,4 +1,4 @@
-﻿using eShop.Shared.Common;
+﻿using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 
 namespace eShop.Modules.Catalog.Commands;

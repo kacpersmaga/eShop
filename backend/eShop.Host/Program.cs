@@ -1,6 +1,7 @@
 using eShop.Infrastructure.Configuration;
 using eShop.Infrastructure.Configuration.Database;
 using eShop.Modules.Catalog;
+using eShop.Modules.Catalog.Api;
 using eShop.Shared.Configuration;
 using Serilog;
 
@@ -11,9 +12,13 @@ try
     builder.ConfigureEnvironment<eShop.Host.Program>();
     builder.Host.ConfigureSerilog();
     
+    builder.Services.AddControllers().AddApplicationPart(typeof(CatalogController).Assembly);
+
+    
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
+    builder.Services.AddAuthorization();
     builder.Services.AddSharedServices(builder.Configuration);
     builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
     builder.Services.AddCatalogModule(builder.Configuration);
@@ -32,6 +37,7 @@ try
     }
 
     app.UseSharedMiddlewares();
+    app.MapControllers();
     app.MapCatalogEndpoints();
 
     app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);

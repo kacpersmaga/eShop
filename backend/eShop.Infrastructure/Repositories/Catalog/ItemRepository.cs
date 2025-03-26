@@ -46,21 +46,25 @@ public class ProductRepository : IProductRepository
         await _context.Products.AddAsync(product);
     }
 
-    public async Task UpdateAsync(Product product)
+    public Task UpdateAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
         _logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
         
         _context.Entry(product).State = EntityState.Modified;
+        
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(Product product)
+    public Task DeleteAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
         _logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
         _context.Products.Remove(product);
+        
+        return Task.CompletedTask;
     }
 
     public async Task<bool> ExistsAsync(int id)
