@@ -66,9 +66,17 @@ public class ProductRepository : IProductRepository
         
         return Task.CompletedTask;
     }
+    
+    public async Task<Product?> GetByNameAsync(string name)
+    {
+        _logger.LogInformation("Fetching product with name '{ProductName}'", name);
+        return await _context.Products
+            .FirstOrDefaultAsync(p => p.Name.Value == name);
+    }
 
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Products.AnyAsync(p => p.Id == id);
     }
+    
 }

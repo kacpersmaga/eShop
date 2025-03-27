@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Modules.Catalog.Domain.Exceptions;
 using eShop.Modules.Catalog.Domain.Repositories;
-using eShop.Modules.Catalog.Infrastructure;
 using eShop.Modules.Catalog.Infrastructure.Persistence;
 using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Logging;
@@ -37,13 +37,12 @@ public class ProductService : IProductService
             var productDtos = _mapper.Map<List<ProductDto>>(products);
 
             _logger.LogInformation("Retrieved {Count} products", productDtos.Count);
-
             return Result<List<ProductDto>>.Success(productDtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all products");
-            return Result<List<ProductDto>>.Failure($"Failed to retrieve products: {ex.Message}");
+            return Result<List<ProductDto>>.Failure("Failed to retrieve products.");
         }
     }
 
@@ -53,21 +52,21 @@ public class ProductService : IProductService
         {
             _logger.LogInformation("Retrieving product with ID {Id}", id);
             var product = await _productRepository.GetByIdAsync(id);
-
-            if (product == null)
-            {
-                _logger.LogWarning("Product with ID {Id} not found", id);
-                return Result<ProductDto>.Failure($"Product with ID {id} not found");
-            }
+            if (product is null)
+                throw new ProductNotFoundException(id);
 
             var productDto = _mapper.Map<ProductDto>(product);
-
             return Result<ProductDto>.Success(productDto);
+        }
+        catch (ProductDomainException ex)
+        {
+            _logger.LogWarning(ex, "Domain exception retrieving product {Id}", id);
+            return Result<ProductDto>.Failure(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving product with ID {Id}", id);
-            return Result<ProductDto>.Failure($"Failed to retrieve product: {ex.Message}");
+            _logger.LogError(ex, "Unexpected error retrieving product {Id}", id);
+            return Result<ProductDto>.Failure("Unexpected error retrieving product.");
         }
     }
 
@@ -79,36 +78,46 @@ public class ProductService : IProductService
             var products = await _productRepository.GetByCategoryAsync(category);
             var productDtos = _mapper.Map<List<ProductDto>>(products);
 
-            _logger.LogInformation("Retrieved {Count} products in category {Category}",
-                productDtos.Count, category);
-
+            _logger.LogInformation("Retrieved {Count} products in category {Category}", productDtos.Count, category);
             return Result<List<ProductDto>>.Success(productDtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving products in category {Category}", category);
-            return Result<List<ProductDto>>.Failure($"Failed to retrieve products: {ex.Message}");
+            return Result<List<ProductDto>>.Failure("Failed to retrieve products by category.");
         }
     }
-    
+
     public async Task<Result<int>> CreateProductAsync(Product product)
     {
         try
         {
             _logger.LogInformation("Creating new product {ProductName}", product.Name.Value);
-            
+
+            var existing = await _productRepository.GetByNameAsync(product.Name.Value);
+            if (existing is not null)
+                throw new ProductAlreadyExistsException(product.Name.Value);
+
             await _productRepository.AddAsync(product);
             await _unitOfWork.SaveChangesAsync();
-            
-            _logger.LogInformation("Product {ProductName} created with ID {ProductId}", 
-                product.Name.Value, product.Id);
-            
+
+            _logger.LogInformation("Product {ProductName} created with ID {ProductId}", product.Name.Value, product.Id);
             return Result<int>.Success(product.Id);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid product data");
+            throw new InvalidProductDataException(ex.Message);
+        }
+        catch (ProductDomainException ex)
+        {
+            _logger.LogWarning(ex, "Domain error while creating product");
+            return Result<int>.Failure(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating product {ProductName}", product.Name.Value);
-            return Result<int>.Failure($"Failed to create product: {ex.Message}");
+            _logger.LogError(ex, "Unexpected error creating product {ProductName}", product.Name.Value);
+            return Result<int>.Failure("Unexpected error occurred while creating the product.");
         }
     }
 
@@ -117,18 +126,27 @@ public class ProductService : IProductService
         try
         {
             _logger.LogInformation("Updating product with ID {ProductId}", product.Id);
-            
+
             await _productRepository.UpdateAsync(product);
             await _unitOfWork.SaveChangesAsync();
-            
+
             _logger.LogInformation("Product with ID {ProductId} updated successfully", product.Id);
-            
             return Result<bool>.Success(true);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid product data during update");
+            throw new InvalidProductDataException(ex.Message);
+        }
+        catch (ProductDomainException ex)
+        {
+            _logger.LogWarning(ex, "Domain error while updating product");
+            return Result<bool>.Failure(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating product with ID {ProductId}", product.Id);
-            return Result<bool>.Failure($"Failed to update product: {ex.Message}");
+            _logger.LogError(ex, "Unexpected error updating product {ProductId}", product.Id);
+            return Result<bool>.Failure("Unexpected error occurred while updating the product.");
         }
     }
 
@@ -137,25 +155,26 @@ public class ProductService : IProductService
         try
         {
             _logger.LogInformation("Removing product with ID {ProductId}", productId);
-            
+
             var product = await _productRepository.GetByIdAsync(productId);
-            if (product == null)
-            {
-                _logger.LogWarning("Product with ID {ProductId} not found for removal", productId);
-                return Result<bool>.Failure($"Product with ID {productId} not found");
-            }
-            
+            if (product is null)
+                throw new ProductNotFoundException(productId);
+
             await _productRepository.DeleteAsync(product);
             await _unitOfWork.SaveChangesAsync();
-            
+
             _logger.LogInformation("Product with ID {ProductId} removed successfully", productId);
-            
             return Result<bool>.Success(true);
+        }
+        catch (ProductDomainException ex)
+        {
+            _logger.LogWarning(ex, "Domain exception while removing product {ProductId}", productId);
+            return Result<bool>.Failure(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing product with ID {ProductId}", productId);
-            return Result<bool>.Failure($"Failed to remove product: {ex.Message}");
+            _logger.LogError(ex, "Unexpected error removing product {ProductId}", productId);
+            return Result<bool>.Failure("Unexpected error occurred while removing the product.");
         }
     }
 }

@@ -70,30 +70,14 @@ public class CatalogController : ControllerBase
     [HttpPost("products")]
     public async Task<IActionResult> AddProduct([FromForm] CreateProductDto form)
     {
-        var dto = new CreateProductDto
-        {
-            Name = form.Name,
-            Price = form.Price,
-            Category = form.Category,
-            Description = form.Description
-        };
-
-        var result = await _mediator.Send(new AddItemCommand(dto, form.Image));
+        var result = await _mediator.Send(new AddItemCommand(form, form.Image));
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpPut("products/{id}")]
     public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDto form)
     {
-        var dto = new UpdateProductDto
-        {
-            Name = form.Name,
-            Price = form.Price,
-            Category = form.Category,
-            Description = form.Description
-        };
-
-        var result = await _mediator.Send(new UpdateItemCommand(id, dto, form.Image));
+        var result = await _mediator.Send(new UpdateItemCommand(id, form, form.Image));
         return result.Succeeded ? Ok(result) :
             result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
     }
