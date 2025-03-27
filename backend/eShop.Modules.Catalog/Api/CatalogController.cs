@@ -1,4 +1,5 @@
-﻿using eShop.Modules.Catalog.Application.Dtos;
+﻿using eShop.Modules.Catalog.Application.Commands;
+using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Application.Queries;
 using eShop.Modules.Catalog.Commands;
 using eShop.Shared.Abstractions.Primitives;

@@ -1,9 +1,10 @@
+using eShop.Modules.Catalog.Application.Services;
 using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Modules.Catalog.Application.Services;
+namespace eShop.Infrastructure.Services.Storage;
 
 public class ImageService : IImageService
 {

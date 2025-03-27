@@ -12,8 +12,6 @@ public static class ServicesConfiguration
     {
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IImageService, ImageService>();
-        
         
         services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
         
