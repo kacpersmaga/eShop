@@ -1,13 +1,9 @@
 ﻿using eShop.Shared.Abstractions.Domain;
 using eShop.Shared.Abstractions.Events;
+using eShop.Shared.Abstractions.Interfaces.Persistence;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Modules.Catalog.Infrastructure.Persistence;
-
-public interface IUnitOfWork
-{
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-}
 
 public class UnitOfWork : IUnitOfWork
 {

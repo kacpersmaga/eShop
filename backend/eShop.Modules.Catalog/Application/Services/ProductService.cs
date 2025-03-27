@@ -3,7 +3,7 @@ using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Exceptions;
 using eShop.Modules.Catalog.Domain.Repositories;
-using eShop.Modules.Catalog.Infrastructure.Persistence;
+using eShop.Shared.Abstractions.Interfaces.Persistence;
 using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Logging;
 

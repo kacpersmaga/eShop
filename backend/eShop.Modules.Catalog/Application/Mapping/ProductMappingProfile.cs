@@ -8,18 +8,6 @@ public class ProductMappingProfile : Profile
 {
     public ProductMappingProfile()
     {
-        CreateMap<CreateProductDto, Product>()
-            .ConvertUsing((src, _) => Product.Create(
-                name: src.Name,
-                price: src.Price,
-                category: src.Category,
-                description: src.Description,
-                imagePath: null
-            ));
-        
-        CreateMap<UpdateProductDto, Product>()
-            .ForAllMembers(opts => opts.Ignore());
-        
         CreateMap<Product, ProductDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name.Value))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description.Value))
