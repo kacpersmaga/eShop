@@ -1,10 +1,12 @@
 ﻿using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Repositories;
+using eShop.Modules.Catalog.Domain.Specifications;
 using eShop.Modules.Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Infrastructure.Repositories.Catalog;
+
 
 public class ProductRepository : IProductRepository
 {
@@ -38,6 +40,37 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
+    public async Task<Product?> GetByNameAsync(string name)
+    {
+        _logger.LogInformation("Fetching product with name '{ProductName}'", name);
+        return await _context.Products
+            .FirstOrDefaultAsync(p => p.Name.Value == name);
+    }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Products.AnyAsync(p => p.Id == id);
+    }
+
+    // New methods using the specification pattern
+    public async Task<Product?> GetBySpecAsync(ISpecification<Product> spec)
+    {
+        _logger.LogInformation("Fetching product by specification");
+        return await ApplySpecification(spec).FirstOrDefaultAsync();
+    }
+
+    public async Task<IEnumerable<Product>> ListAsync(ISpecification<Product> spec)
+    {
+        _logger.LogInformation("Fetching products list by specification");
+        return await ApplySpecification(spec).ToListAsync();
+    }
+
+    public async Task<int> CountAsync(ISpecification<Product> spec)
+    {
+        _logger.LogInformation("Counting products by specification");
+        return await ApplySpecification(spec).CountAsync();
+    }
+
     public async Task AddAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
@@ -66,17 +99,9 @@ public class ProductRepository : IProductRepository
         
         return Task.CompletedTask;
     }
-    
-    public async Task<Product?> GetByNameAsync(string name)
-    {
-        _logger.LogInformation("Fetching product with name '{ProductName}'", name);
-        return await _context.Products
-            .FirstOrDefaultAsync(p => p.Name.Value == name);
-    }
 
-    public async Task<bool> ExistsAsync(int id)
+    private IQueryable<Product> ApplySpecification(ISpecification<Product> spec)
     {
-        return await _context.Products.AnyAsync(p => p.Id == id);
+        return SpecificationEvaluator<Product>.GetQuery(_context.Products.AsQueryable(), spec);
     }
-    
 }

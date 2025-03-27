@@ -5,7 +5,7 @@ using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Modules.Catalog.Application.Queries.Handlers;
+namespace eShop.Modules.Catalog.Application.Queries.GetAll;
 
 public class GetAllItemsQueryHandler : IRequestHandler<GetAllItemsQuery, Result<List<ProductDto>>>
 {

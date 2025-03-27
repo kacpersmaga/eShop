@@ -1,4 +1,5 @@
 ﻿using eShop.Modules.Catalog.Application.Queries;
+using eShop.Modules.Catalog.Application.Queries.GetAll;
 using eShop.Modules.Catalog.Configuration;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;

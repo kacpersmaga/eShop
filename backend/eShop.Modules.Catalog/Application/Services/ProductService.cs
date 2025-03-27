@@ -3,6 +3,12 @@ using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Exceptions;
 using eShop.Modules.Catalog.Domain.Repositories;
+using eShop.Modules.Catalog.Domain.Specifications;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Availability;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Filtering;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Price;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Searching;
 using eShop.Shared.Abstractions.Interfaces.Persistence;
 using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Logging;
@@ -33,7 +39,8 @@ public class ProductService : IProductService
         try
         {
             _logger.LogInformation("Retrieving all products");
-            var products = await _productRepository.GetAllAsync();
+            var spec = new AvailableProductsSpecification();
+            var products = await _productRepository.ListAsync(spec);
             var productDtos = _mapper.Map<List<ProductDto>>(products);
 
             _logger.LogInformation("Retrieved {Count} products", productDtos.Count);
@@ -51,7 +58,9 @@ public class ProductService : IProductService
         try
         {
             _logger.LogInformation("Retrieving product with ID {Id}", id);
-            var product = await _productRepository.GetByIdAsync(id);
+            var spec = new ProductByIdSpecification(id);
+            var product = await _productRepository.GetBySpecAsync(spec);
+            
             if (product is null)
                 throw new ProductNotFoundException(id);
 
@@ -75,7 +84,8 @@ public class ProductService : IProductService
         try
         {
             _logger.LogInformation("Retrieving products in category {Category}", category);
-            var products = await _productRepository.GetByCategoryAsync(category);
+            var spec = new ProductByCategorySpecification(category, true);
+            var products = await _productRepository.ListAsync(spec);
             var productDtos = _mapper.Map<List<ProductDto>>(products);
 
             _logger.LogInformation("Retrieved {Count} products in category {Category}", productDtos.Count, category);
@@ -88,13 +98,129 @@ public class ProductService : IProductService
         }
     }
 
+    public async Task<Result<List<ProductDto>>> GetProductsBySearchAsync(string searchTerm)
+    {
+        try
+        {
+            _logger.LogInformation("Searching products with term {SearchTerm}", searchTerm);
+            var spec = new ProductBySearchTermSpecification(searchTerm);
+            var products = await _productRepository.ListAsync(spec);
+            var productDtos = _mapper.Map<List<ProductDto>>(products);
+
+            _logger.LogInformation("Found {Count} products matching search term {SearchTerm}", productDtos.Count, searchTerm);
+            return Result<List<ProductDto>>.Success(productDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching products with term {SearchTerm}", searchTerm);
+            return Result<List<ProductDto>>.Failure("Failed to search products.");
+        }
+    }
+
+    public async Task<Result<List<ProductDto>>> GetProductsByPriceRangeAsync(decimal minPrice, decimal maxPrice)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving products in price range {MinPrice} to {MaxPrice}", minPrice, maxPrice);
+            var spec = new ProductsByPriceRangeSpecification(minPrice, maxPrice);
+            var products = await _productRepository.ListAsync(spec);
+            var productDtos = _mapper.Map<List<ProductDto>>(products);
+
+            _logger.LogInformation("Retrieved {Count} products in price range", productDtos.Count);
+            return Result<List<ProductDto>>.Success(productDtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving products in price range {MinPrice} to {MaxPrice}", minPrice, maxPrice);
+            return Result<List<ProductDto>>.Failure("Failed to retrieve products by price range.");
+        }
+    }
+
+    public async Task<Result<PagedProductsDto>> GetPagedProductsAsync(int pageNumber, int pageSize, string? category = null, string? sortBy = null, bool ascending = true)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving paged products (Page {PageNumber}, Size {PageSize})", pageNumber, pageSize);
+            
+            var builder = new ProductSpecificationBuilder()
+                .OnlyAvailable()
+                .WithPaging(pageNumber, pageSize);
+            
+            if (!string.IsNullOrEmpty(category))
+            {
+                builder.ByCategory(category);
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        builder.OrderByName(ascending);
+                        break;
+                    case "price":
+                        builder.OrderByPrice(ascending);
+                        break;
+                    case "date":
+                        builder.OrderByDate(ascending);
+                        break;
+                    default:
+                        builder.OrderByName(ascending);
+                        break;
+                }
+            }
+            else
+            {
+                builder.OrderByName(true);
+            }
+            
+            var spec = builder.Build();
+            var products = await _productRepository.ListAsync(spec);
+            
+            var countSpec = new ProductSpecificationBuilder()
+                .OnlyAvailable();
+                
+            if (!string.IsNullOrEmpty(category))
+            {
+                countSpec.ByCategory(category);
+            }
+            
+            var totalItems = await _productRepository.CountAsync(countSpec.Build());
+            
+            var productDtos = _mapper.Map<List<ProductDto>>(products);
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            
+            var result = new PagedProductsDto
+            {
+                Items = productDtos,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber < totalPages
+            };
+
+            _logger.LogInformation("Retrieved {Count} products (Page {PageNumber} of {TotalPages})", 
+                productDtos.Count, pageNumber, totalPages);
+                
+            return Result<PagedProductsDto>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving paged products");
+            return Result<PagedProductsDto>.Failure("Failed to retrieve paged products.");
+        }
+    }
+
     public async Task<Result<int>> CreateProductAsync(Product product)
     {
         try
         {
             _logger.LogInformation("Creating new product {ProductName}", product.Name.Value);
 
-            var existing = await _productRepository.GetByNameAsync(product.Name.Value);
+            var spec = new ProductByNameSpecification(product.Name.Value);
+            var existing = await _productRepository.GetBySpecAsync(spec);
             if (existing is not null)
                 throw new ProductAlreadyExistsException(product.Name.Value);
 
@@ -156,7 +282,8 @@ public class ProductService : IProductService
         {
             _logger.LogInformation("Removing product with ID {ProductId}", productId);
 
-            var product = await _productRepository.GetByIdAsync(productId);
+            var spec = new ProductByIdSpecification(productId);
+            var product = await _productRepository.GetBySpecAsync(spec);
             if (product is null)
                 throw new ProductNotFoundException(productId);
 
