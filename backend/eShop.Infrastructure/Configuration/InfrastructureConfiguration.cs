@@ -1,5 +1,6 @@
 ﻿using eShop.Infrastructure.Configuration.Caching;
 using eShop.Infrastructure.Configuration.Database;
+using eShop.Infrastructure.Configuration.Events;
 using eShop.Infrastructure.Configuration.Repositories;
 using eShop.Infrastructure.Configuration.Storage;
 using Microsoft.AspNetCore.Hosting;
@@ -12,8 +13,8 @@ namespace eShop.Infrastructure.Configuration;
 public static class InfrastructureConfiguration
 {
     public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services, 
-        IConfiguration configuration, 
+        this IServiceCollection services,
+        IConfiguration configuration,
         IWebHostEnvironment env)
     {
         if (!env.IsEnvironment("Test"))
@@ -24,6 +25,8 @@ public static class InfrastructureConfiguration
 
         services.ConfigureRedis(configuration);
         services.ConfigureRepositories();
+        services.AddStorageServices();
+        services.AddEventDispatching();
 
         return services;
     }
