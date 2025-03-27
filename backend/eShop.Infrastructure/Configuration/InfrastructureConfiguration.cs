@@ -24,7 +24,7 @@ public static class InfrastructureConfiguration
         }
 
         services.ConfigureRedis(configuration);
-        services.ConfigureRepositories();
+        services.ConfigureRepositories(configuration);
         services.AddStorageServices();
         services.AddEventDispatching();
 
