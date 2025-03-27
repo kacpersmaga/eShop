@@ -1,5 +1,6 @@
 ﻿using eShop.Modules.Catalog.Domain.Repositories;
 using eShop.Modules.Catalog.Infrastructure;
+using eShop.Modules.Catalog.Infrastructure.Persistence;
 using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Abstractions.Primitives;
 using MediatR;

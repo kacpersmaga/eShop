@@ -1,6 +1,7 @@
 ﻿using eShop.Modules.Catalog.Application.Mapping;
 using eShop.Modules.Catalog.Application.Services;
 using eShop.Modules.Catalog.Infrastructure;
+using eShop.Modules.Catalog.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Modules.Catalog.Configuration;

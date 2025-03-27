@@ -1,9 +1,8 @@
-﻿using eShop.Modules.Catalog.Infrastructure.Persistence;
-using eShop.Shared.Abstractions.Domain;
+﻿using eShop.Shared.Abstractions.Domain;
 using eShop.Shared.Abstractions.Events;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Modules.Catalog.Infrastructure;
+namespace eShop.Modules.Catalog.Infrastructure.Persistence;
 
 public interface IUnitOfWork
 {
