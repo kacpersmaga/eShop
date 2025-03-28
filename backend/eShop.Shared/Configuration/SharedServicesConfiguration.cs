@@ -13,6 +13,7 @@ public static class SharedServicesConfiguration
     public static IServiceCollection AddSharedServices(this IServiceCollection services, IConfiguration configuration)
     {
         return services
+            .AddCorsPolicy(configuration)
             .AddValidatorsFromAssemblies(AppDomain.CurrentDomain.GetAssemblies())
             .ConfigureApiBehavior()
             .Configure<RateLimitingSettings>(configuration.GetSection("RateLimiting"))

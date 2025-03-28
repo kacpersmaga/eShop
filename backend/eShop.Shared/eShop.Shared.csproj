@@ -18,9 +18,7 @@
     </ItemGroup>
     
     <ItemGroup>
-      <Folder Include="Abstractions\Interfaces\Communication\" />
       <Folder Include="Abstractions\Interfaces\Security\" />
-      <Folder Include="Infrastructure\" />
     </ItemGroup>
 
 </Project>

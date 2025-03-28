@@ -18,7 +18,6 @@
 
     <ItemGroup>
       <Folder Include="Application\Validation\" />
-      <Folder Include="Domain\Entities\" />
     </ItemGroup>
 
 </Project>

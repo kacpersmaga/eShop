@@ -1,5 +1,6 @@
 using eShop.Infrastructure.Configuration;
 using eShop.Infrastructure.Configuration.Database;
+using eShop.Infrastructure.Configuration.Swagger;
 using eShop.Modules.Catalog;
 using eShop.Modules.Catalog.Api;
 using eShop.Shared.Configuration;
@@ -13,33 +14,27 @@ try
     builder.Host.ConfigureSerilog();
     
     builder.Services.AddControllers().AddApplicationPart(typeof(CatalogController).Assembly);
-
-    
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
-
     builder.Services.AddAuthorization();
+    
     builder.Services.AddSharedServices(builder.Configuration);
     builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
     builder.Services.AddCatalogModule(builder.Configuration);
 
     var app = builder.Build();
-
-    if (!builder.Environment.IsEnvironment("Test"))
+    
+    if (!EnvironmentHelpers.IsTestEnvironment(builder.Environment))
     {
         app.ApplyDatabaseMigrations();
     }
     
-    if (builder.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
-
     app.UseSharedMiddlewares();
+    app.UseCorsPolicy();
+    app.UseSwaggerDocs(builder.Environment);
+    
     app.MapControllers();
     app.MapCatalogEndpoints();
-
+    
     app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
     app.Run();
 }

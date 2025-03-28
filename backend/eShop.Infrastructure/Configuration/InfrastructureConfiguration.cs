@@ -3,6 +3,8 @@ using eShop.Infrastructure.Configuration.Database;
 using eShop.Infrastructure.Configuration.Events;
 using eShop.Infrastructure.Configuration.Repositories;
 using eShop.Infrastructure.Configuration.Storage;
+using eShop.Infrastructure.Configuration.Swagger;
+using eShop.Shared.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +19,7 @@ public static class InfrastructureConfiguration
         IConfiguration configuration,
         IWebHostEnvironment env)
     {
-        if (!env.IsEnvironment("Test"))
+        if (!EnvironmentHelpers.IsTestEnvironment(env))
         {
             services.ConfigureDatabase(configuration, env);
             services.ConfigureBlobStorage(configuration);
@@ -27,6 +29,7 @@ public static class InfrastructureConfiguration
         services.ConfigureRepositories(configuration);
         services.AddStorageServices();
         services.AddEventDispatching();
+        services.AddSwaggerDocs();
 
         return services;
     }

@@ -1,4 +1,5 @@
 ﻿using eShop.Modules.Catalog.Infrastructure.Persistence;
+using eShop.Shared.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,10 +15,10 @@ public static class DatabaseConfiguration
         IConfiguration configuration, 
         IWebHostEnvironment env)
     {
-        var connectionStringName = env.IsEnvironment("Test") ? "TestConnection" : "DefaultConnection";
+        var connectionStringName = EnvironmentHelpers.IsTestEnvironment(env) ? "TestConnection" : "DefaultConnection";
 
         var connectionString = configuration.GetConnectionString(connectionStringName)
-                               ?? throw new InvalidOperationException("Database connection string is not configured.");
+                               ?? throw new InvalidOperationException($"Database connection string '{connectionStringName}' is not configured.");
     
         services.AddDbContext<CatalogDbContext>(options =>
             options.UseSqlServer(connectionString));

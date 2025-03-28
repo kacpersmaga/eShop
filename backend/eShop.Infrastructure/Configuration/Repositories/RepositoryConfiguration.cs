@@ -7,18 +7,20 @@ namespace eShop.Infrastructure.Configuration.Repositories;
 
 public static class RepositoryConfiguration
 {
+    private const string UseCachingKey = "UseCaching";
+    private const bool DefaultUseCachingValue = true;
+    
     public static IServiceCollection ConfigureRepositories(this IServiceCollection services, IConfiguration configuration)
     {
-        bool useCaching = configuration.GetValue("UseCaching", true);
+        bool useCaching = configuration.GetValue(UseCachingKey, DefaultUseCachingValue);
 
-        if (useCaching)
-        {
-            services.AddScoped<IProductRepository, CachedProductRepository>();
-        }
-        else
-        {
-            services.AddScoped<IProductRepository, ProductRepository>();
-        }
+        services.AddScoped<IProductRepository>(serviceProvider => 
+            useCaching
+                ? serviceProvider.GetRequiredService<CachedProductRepository>()
+                : serviceProvider.GetRequiredService<ProductRepository>());
+        
+        services.AddScoped<ProductRepository>();
+        services.AddScoped<CachedProductRepository>();
 
         return services;
     }
