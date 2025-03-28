@@ -26,7 +26,6 @@
 
     <ItemGroup>
       <Folder Include="Configuration\Security\" />
-      <Folder Include="Data\" />
     </ItemGroup>
 
 </Project>
