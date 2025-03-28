@@ -10,7 +10,6 @@ public static class SwaggerConfiguration
 {
     private const string ApiTitle = "eShop API";
     private const string ApiVersion = "v1";
-    private const string SwaggerEndpoint = "/swagger/v1/swagger.json";
 
     public static IServiceCollection AddSwaggerDocs(this IServiceCollection services)
     {
@@ -46,15 +45,12 @@ public static class SwaggerConfiguration
     {
         if (env.IsDevelopment() || env.IsStaging())
         {
-            app.UseSwagger(options =>
-            {
-                options.RouteTemplate = "api-docs/{documentName}/swagger.json";
-            });
+            app.UseSwagger();
             
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint(SwaggerEndpoint, $"{ApiTitle} {ApiVersion}");
-                options.RoutePrefix = "api-docs";
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", $"{ApiTitle} {ApiVersion}");
+                options.RoutePrefix = "swagger";
                 options.DocumentTitle = ApiTitle;
                 options.DefaultModelsExpandDepth(-1);
                 options.DisplayRequestDuration();
