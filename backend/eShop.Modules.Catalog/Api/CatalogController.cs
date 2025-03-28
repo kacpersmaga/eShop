@@ -9,11 +9,15 @@ using eShop.Modules.Catalog.Application.Queries.Search.Paged;
 using eShop.Modules.Catalog.Application.Queries.Search.TextSearch;
 using eShop.Shared.Abstractions.Primitives;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Modules.Catalog.Api;
 
+/// <summary>
+/// API controller for managing product catalog operations including browsing, searching, and product management
+/// </summary>
 [ApiController]
 [Route("api/catalog")]
 public class CatalogController : ControllerBase
@@ -21,6 +25,12 @@ public class CatalogController : ControllerBase
     private readonly IMediator _mediator;
     private readonly ILogger<CatalogController> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CatalogController"/> class
+    /// </summary>
+    /// <param name="mediator">Mediator service for handling commands and queries</param>
+    /// <param name="logger">Logger for controller operations</param>
+    /// <exception cref="ArgumentNullException">Thrown if required dependencies are null</exception>
     public CatalogController(
         IMediator mediator,
         ILogger<CatalogController> logger)
@@ -29,7 +39,22 @@ public class CatalogController : ControllerBase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Retrieves products with optional filtering, paging, and sorting
+    /// </summary>
+    /// <param name="page">Page number (1-based)</param>
+    /// <param name="pageSize">Number of items per page</param>
+    /// <param name="category">Filter by product category</param>
+    /// <param name="sortBy">Property name to sort by</param>
+    /// <param name="ascending">Sort direction (true for ascending, false for descending)</param>
+    /// <returns>List of products based on provided criteria</returns>
+    /// <response code="200">Returns the matching products</response>
+    /// <response code="400">If the parameters are invalid</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpGet("products")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetProducts([FromQuery] int? page, [FromQuery] int? pageSize, 
         [FromQuery] string? category, [FromQuery] string? sortBy, [FromQuery] bool? ascending)
     {
@@ -64,7 +89,18 @@ public class CatalogController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Searches for products matching the specified search term
+    /// </summary>
+    /// <param name="term">Search term to match against product name and description</param>
+    /// <returns>List of products matching the search criteria</returns>
+    /// <response code="200">Returns the matching products</response>
+    /// <response code="400">If the search term is empty or invalid</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpGet("products/search")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SearchProducts([FromQuery] string term)
     {
         try
@@ -86,7 +122,18 @@ public class CatalogController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves a specific product by its identifier
+    /// </summary>
+    /// <param name="id">Product identifier</param>
+    /// <returns>Product details</returns>
+    /// <response code="200">Returns the requested product</response>
+    /// <response code="404">If the product is not found</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpGet("products/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetProductById(int id)
     {
         try
@@ -103,7 +150,19 @@ public class CatalogController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves products within the specified price range
+    /// </summary>
+    /// <param name="minPrice">Minimum price (inclusive)</param>
+    /// <param name="maxPrice">Maximum price (inclusive)</param>
+    /// <returns>List of products within the specified price range</returns>
+    /// <response code="200">Returns products within the price range</response>
+    /// <response code="400">If the price range is invalid</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpGet("products/price-range")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetProductsByPriceRange([FromQuery] decimal minPrice, [FromQuery] decimal maxPrice)
     {
         try
@@ -125,22 +184,76 @@ public class CatalogController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Creates a new product
+    /// </summary>
+    /// <param name="form">Product details and image</param>
+    /// <returns>Result indicating success or failure with the created product details</returns>
+    /// <response code="200">Returns the newly created product</response>
+    /// <response code="400">If the product data is invalid</response>
     [HttpPost("products")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> AddProduct([FromForm] CreateProductDto form)
     {
-        var result = await _mediator.Send(new AddItemCommand(form, form.Image));
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        try
+        {
+            _logger.LogInformation("Executing AddItemCommand...");
+            var result = await _mediator.Send(new AddItemCommand(form, form.Image));
+            return result.Succeeded ? Ok(result) : BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while creating a new product.");
+            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+        }
     }
 
+    /// <summary>
+    /// Updates an existing product
+    /// </summary>
+    /// <param name="id">Product identifier</param>
+    /// <param name="form">Updated product details and optional new image</param>
+    /// <returns>Result indicating success or failure with the updated product details</returns>
+    /// <response code="200">Returns the updated product</response>
+    /// <response code="400">If the product data is invalid</response>
+    /// <response code="404">If the product is not found</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpPut("products/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDto form)
     {
-        var result = await _mediator.Send(new UpdateItemCommand(id, form, form.Image));
-        return result.Succeeded ? Ok(result) :
-            result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
+        try
+        {
+            _logger.LogInformation("Executing UpdateItemCommand for ID {ProductId}...", id);
+            var result = await _mediator.Send(new UpdateItemCommand(id, form, form.Image));
+            return result.Succeeded ? Ok(result) :
+                result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while updating product with ID {ProductId}.", id);
+            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+        }
     }
 
+    /// <summary>
+    /// Deletes a product
+    /// </summary>
+    /// <param name="id">Product identifier</param>
+    /// <returns>Result indicating success or failure</returns>
+    /// <response code="200">If the product was successfully deleted</response>
+    /// <response code="404">If the product is not found</response>
+    /// <response code="400">If the delete operation failed due to business rules</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpDelete("products/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         try
