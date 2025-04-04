@@ -34,8 +34,8 @@
 
   eshop:
     build:
-      context: ./backend/eShop.Host
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: eShop.Host/Dockerfile
     container_name: eshop-app
     ports:
       - "8080:8080"
@@ -47,7 +47,7 @@
       - app-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=eShopDB;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=db;Database=master;User Id=sa;Password=Password123!;TrustServerCertificate=True
       - ConnectionStrings__Redis=redis:6379
       - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
       - JwtSettings__Secret=MyDockerDevSuperSecretKey1234567890
@@ -64,6 +64,20 @@
       - TwilioSettings__AccountSid=******
       - TwilioSettings__AuthToken=******
       - TwilioSettings__FromPhoneNumber=******
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eshop-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - eshop
+    environment:
+      - NEXT_PUBLIC_API_URL=http://eshop:8080/api
 
 networks:
   app-network:
