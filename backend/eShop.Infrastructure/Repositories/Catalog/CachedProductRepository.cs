@@ -4,13 +4,14 @@ using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Repositories;
 using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Filtering;
 using eShop.Modules.Catalog.Infrastructure.Persistence;
+using eShop.Shared.Abstractions.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace eShop.Infrastructure.Repositories.Catalog;
 
-public class CachedProductRepository : CachedSpecificationRepository<Product>, IProductRepository
+public class CachedProductRepository : CachedSpecificationRepository<Product>, IProductRepository, ICacheInvalidator
 {
     private readonly CatalogDbContext _catalogContext;
     private readonly string _cacheKeyPrefix = "Product_";
@@ -88,17 +89,15 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     {
         return await _catalogContext.Products.AnyAsync(p => p.Id == id);
     }
-
+    
     public async Task AddAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
         _logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
         await _catalogContext.Products.AddAsync(product);
-        
-        await InvalidateCacheAsync($"{_cacheKeyPrefix}*");
     }
-
+    
     public Task UpdateAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
@@ -106,17 +105,9 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
         _logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
         _catalogContext.Entry(product).State = EntityState.Modified;
         
-        var tasks = new List<Task>
-        {
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Id_{product.Id}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Name_{product.Name.Value}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Category_{product.Category.Value}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}GetAll")
-        };
-        
-        return Task.WhenAll(tasks);
+        return Task.CompletedTask;
     }
-
+    
     public Task DeleteAsync(Product product)
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
@@ -124,14 +115,12 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
         _logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
         _catalogContext.Products.Remove(product);
         
-        var tasks = new List<Task>
-        {
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Id_{product.Id}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Name_{product.Name.Value}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}Category_{product.Category.Value}"),
-            InvalidateCacheKeyAsync($"{_cacheKeyPrefix}GetAll")
-        };
-        
-        return Task.WhenAll(tasks);
+        return Task.CompletedTask;
+    }
+    
+    public async Task InvalidateCacheAsync()
+    {
+        _logger.LogInformation("Invalidating product cache after database changes");
+        await InvalidateCacheAsync($"{_cacheKeyPrefix}*");
     }
 }

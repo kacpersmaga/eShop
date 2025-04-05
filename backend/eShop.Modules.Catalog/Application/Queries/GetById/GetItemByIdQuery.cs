@@ -4,4 +4,12 @@ using MediatR;
 
 namespace eShop.Modules.Catalog.Application.Queries.GetById;
 
-public record GetItemByIdQuery(int ItemId) : IRequest<Result<ProductDto>>;
+public class GetItemByIdQuery : IRequest<Result<PagedProductsDto>>
+{
+    public int ItemId { get; }
+
+    public GetItemByIdQuery(int itemId)
+    {
+        ItemId = itemId;
+    }
+}

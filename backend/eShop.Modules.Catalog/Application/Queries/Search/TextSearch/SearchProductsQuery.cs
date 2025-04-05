@@ -4,7 +4,7 @@ using MediatR;
 
 namespace eShop.Modules.Catalog.Application.Queries.Search.TextSearch;
 
-public class SearchProductsQuery : IRequest<Result<List<ProductDto>>>
+public class SearchProductsQuery : IRequest<Result<PagedProductsDto>>
 {
     public string SearchTerm { get; }
 

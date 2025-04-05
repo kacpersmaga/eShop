@@ -65,21 +65,21 @@ public class CatalogController : ControllerBase
                 _logger.LogInformation("Executing GetPagedProductsQuery...");
                 var pagedResult = await _mediator.Send(new GetPagedProductsQuery(
                     page.Value, pageSize.Value, category, sortBy, ascending ?? true));
-                
+            
                 return pagedResult.Succeeded ? Ok(pagedResult) : BadRequest(pagedResult);
             }
-            
+        
             if (!string.IsNullOrEmpty(category))
             {
                 _logger.LogInformation("Executing GetItemsByCategoryQuery for category {Category}...", category);
                 var categoryResult = await _mediator.Send(new GetItemsByCategoryQuery(category));
-                
+            
                 return categoryResult.Succeeded ? Ok(categoryResult) : BadRequest(categoryResult);
             }
-            
+        
             _logger.LogInformation("Executing GetAllItemsQuery query...");
             var result = await _mediator.Send(new GetAllItemsQuery());
-            
+        
             return result.Succeeded ? Ok(result) : BadRequest(result);
         }
         catch (Exception ex)
@@ -109,10 +109,10 @@ public class CatalogController : ControllerBase
             {
                 return BadRequest(Result.Failure("Search term cannot be empty."));
             }
-            
+        
             _logger.LogInformation("Executing SearchProductsQuery with term {SearchTerm}...", term);
             var result = await _mediator.Send(new SearchProductsQuery(term));
-            
+        
             return result.Succeeded ? Ok(result) : BadRequest(result);
         }
         catch (Exception ex)
@@ -140,7 +140,7 @@ public class CatalogController : ControllerBase
         {
             _logger.LogInformation("Executing GetItemByIdQuery query for ID {ProductId}...", id);
             var result = await _mediator.Send(new GetItemByIdQuery(id));
-            
+        
             return result.Succeeded ? Ok(result) : NotFound(result);
         }
         catch (Exception ex)
@@ -171,10 +171,10 @@ public class CatalogController : ControllerBase
             {
                 return BadRequest(Result.Failure("Invalid price range."));
             }
-            
+        
             _logger.LogInformation("Executing GetProductsByPriceRangeQuery with range {MinPrice} to {MaxPrice}...", minPrice, maxPrice);
             var result = await _mediator.Send(new GetProductsByPriceRangeQuery(minPrice, maxPrice));
-            
+        
             return result.Succeeded ? Ok(result) : BadRequest(result);
         }
         catch (Exception ex)

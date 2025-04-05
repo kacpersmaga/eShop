@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace eShop.Modules.Catalog.Application.Queries.Search.ByPriceRnage;
 
-public class GetProductsByPriceRangeQueryHandler : IRequestHandler<GetProductsByPriceRangeQuery, Result<List<ProductDto>>>
+public class GetProductsByPriceRangeQueryHandler : IRequestHandler<GetProductsByPriceRangeQuery, Result<PagedProductsDto>>
 {
     private readonly IProductService _productService;
     private readonly ILogger<GetProductsByPriceRangeQueryHandler> _logger;
@@ -19,7 +19,7 @@ public class GetProductsByPriceRangeQueryHandler : IRequestHandler<GetProductsBy
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<List<ProductDto>>> Handle(GetProductsByPriceRangeQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedProductsDto>> Handle(GetProductsByPriceRangeQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -30,19 +30,32 @@ public class GetProductsByPriceRangeQueryHandler : IRequestHandler<GetProductsBy
             if (!result.Succeeded)
             {
                 _logger.LogError("Failed to fetch products by price range: {Errors}", string.Join(", ", result.Errors));
-                return Result<List<ProductDto>>.Failure(result.Errors);
+                return Result<PagedProductsDto>.Failure(result.Errors);
             }
             
-            _logger.LogInformation("Successfully fetched {Count} products in price range {MinPrice} to {MaxPrice}.", 
-                result.Data?.Count ?? 0, request.MinPrice, request.MaxPrice);
+            var products = result.Data ?? new List<ProductDto>();
             
-            return result;
+            var paged = new PagedProductsDto
+            {
+                Items = products,
+                PageNumber = 1,
+                PageSize = products.Count,
+                TotalItems = products.Count,
+                TotalPages = 1,
+                HasPreviousPage = false,
+                HasNextPage = false
+            };
+            
+            _logger.LogInformation("Successfully fetched {Count} products in price range {MinPrice} to {MaxPrice}.", 
+                products.Count, request.MinPrice, request.MaxPrice);
+            
+            return Result<PagedProductsDto>.Success(paged);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching products in price range {MinPrice} to {MaxPrice}", 
                 request.MinPrice, request.MaxPrice);
-            return Result<List<ProductDto>>.Failure($"Failed to retrieve products by price range: {ex.Message}");
+            return Result<PagedProductsDto>.Failure($"Failed to retrieve products by price range: {ex.Message}");
         }
     }
 }

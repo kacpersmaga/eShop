@@ -4,4 +4,4 @@ using MediatR;
 
 namespace eShop.Modules.Catalog.Application.Queries.GetAll;
 
-public record GetAllItemsQuery : IRequest<Result<List<ProductDto>>>;
+public record GetAllItemsQuery : IRequest<Result<PagedProductsDto>>;

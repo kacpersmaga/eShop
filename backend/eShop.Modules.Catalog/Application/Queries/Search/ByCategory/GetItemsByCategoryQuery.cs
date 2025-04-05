@@ -4,7 +4,7 @@ using MediatR;
 
 namespace eShop.Modules.Catalog.Application.Queries.Search.ByCategory;
 
-public class GetItemsByCategoryQuery : IRequest<Result<List<ProductDto>>>
+public class GetItemsByCategoryQuery : IRequest<Result<PagedProductsDto>>
 {
     public string Category { get; }
 

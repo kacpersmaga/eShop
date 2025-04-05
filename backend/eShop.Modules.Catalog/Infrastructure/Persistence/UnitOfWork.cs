@@ -10,15 +10,18 @@ public class UnitOfWork : IUnitOfWork
     private readonly CatalogDbContext _dbContext;
     private readonly IDomainEventDispatcher _eventDispatcher;
     private readonly ILogger<UnitOfWork> _logger;
+    private readonly IEnumerable<ICacheInvalidator> _cacheInvalidators;
 
     public UnitOfWork(
         CatalogDbContext dbContext,
         IDomainEventDispatcher eventDispatcher,
-        ILogger<UnitOfWork> logger)
+        ILogger<UnitOfWork> logger,
+        IEnumerable<ICacheInvalidator> cacheInvalidators = null)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cacheInvalidators = cacheInvalidators ?? Enumerable.Empty<ICacheInvalidator>();
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -39,6 +42,13 @@ public class UnitOfWork : IUnitOfWork
             
             var result = await _dbContext.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Saved {Count} changes to the database", result);
+            
+            if (_cacheInvalidators.Any())
+            {
+                _logger.LogInformation("Invalidating caches after database changes");
+                var invalidationTasks = _cacheInvalidators.Select(invalidator => invalidator.InvalidateCacheAsync());
+                await Task.WhenAll(invalidationTasks);
+            }
             
             if (domainEvents.Any())
             {

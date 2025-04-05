@@ -4,7 +4,7 @@ using MediatR;
 
 namespace eShop.Modules.Catalog.Application.Queries.Search.ByPriceRnage;
 
-public class GetProductsByPriceRangeQuery : IRequest<Result<List<ProductDto>>>
+public class GetProductsByPriceRangeQuery : IRequest<Result<PagedProductsDto>>
 {
     public decimal MinPrice { get; }
     public decimal MaxPrice { get; }

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace eShop.Modules.Catalog.Application.Queries.Search.TextSearch;
 
-public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, Result<List<ProductDto>>>
+public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, Result<PagedProductsDto>>
 {
     private readonly IProductService _productService;
     private readonly ILogger<SearchProductsQueryHandler> _logger;
@@ -19,7 +19,7 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, R
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<List<ProductDto>>> Handle(SearchProductsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<PagedProductsDto>> Handle(SearchProductsQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -29,17 +29,30 @@ public class SearchProductsQueryHandler : IRequestHandler<SearchProductsQuery, R
             if (!result.Succeeded)
             {
                 _logger.LogError("Failed to search products: {Errors}", string.Join(", ", result.Errors));
-                return Result<List<ProductDto>>.Failure(result.Errors);
+                return Result<PagedProductsDto>.Failure(result.Errors);
             }
             
-            _logger.LogInformation("Successfully found {Count} products matching search term.", result.Data?.Count ?? 0);
+            var products = result.Data ?? new List<ProductDto>();
             
-            return result;
+            var paged = new PagedProductsDto
+            {
+                Items = products,
+                PageNumber = 1,
+                PageSize = products.Count,
+                TotalItems = products.Count,
+                TotalPages = 1,
+                HasPreviousPage = false,
+                HasNextPage = false
+            };
+            
+            _logger.LogInformation("Successfully found {Count} products matching search term.", products.Count);
+            
+            return Result<PagedProductsDto>.Success(paged);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching products with term: {SearchTerm}", request.SearchTerm);
-            return Result<List<ProductDto>>.Failure($"Failed to search products: {ex.Message}");
+            return Result<PagedProductsDto>.Failure($"Failed to search products: {ex.Message}");
         }
     }
 }

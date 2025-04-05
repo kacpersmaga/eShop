@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using eShop.Modules.Catalog.Domain.Events;
 using eShop.Modules.Catalog.Domain.ValueObjects;
 using eShop.Shared.Abstractions.Domain;
@@ -16,8 +17,10 @@ public class Product : AggregateRoot
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
     
+    [JsonConstructor]
     private Product() { }
-    
+
+
     private Product(
         ProductName name,
         Money price,
