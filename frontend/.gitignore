@@ -1,29 +1,18 @@
-# ===============================
-# 🔧 Dependencies
-# ===============================
+# Dependencies
 node_modules/
 .pnp/
 .pnp.*
 
-
-# ===============================
-# 🚀 Next.js build output
-# ===============================
+# Next.js build output
 .next/
 out/
 build/
 
-# ===============================
-# 🌬️ Tailwind (usually not needed, just in case)
-# ===============================
+# Tailwind (optional)
 *.css.txt
 tailwind.config.js.backup
 
-
-# ===============================
-# 📦 Package managers
-# ===============================
-# Yarn / npm / pnpm debug logs
+# Package managers
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -36,37 +25,26 @@ yarn-error.log*
 !.yarn/releases
 !.yarn/versions
 
-# ===============================
-# 🧪 Testing / Coverage
-# ===============================
+# Testing / Coverage
 coverage/
 jest.config.js.backup
 
-
-# ===============================
-# 🔐 Environment / Config
-# ===============================
+# Environment / Config
 .env*
 !.env.example
 
-# ===============================
-# ⚙️ IDEs and Editor junk
-# ===============================
+# IDEs and Editor junk
 .DS_Store
 .vscode/
 *.suo
 *.user
 *.sw?
 
-# ===============================
-# 📦 TypeScript
-# ===============================
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# ===============================
-# 🧹 Misc
-# ===============================
+# Misc
 .eslintcache
 .vercel/
 *.pem

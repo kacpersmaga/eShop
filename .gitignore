@@ -1,0 +1,60 @@
+# Docker
+docker-compose.override.yml
+*.pid
+
+# Logs (shared/general)
+*.log
+*.gz
+logs/
+log/
+*.tmp
+
+# Environment files
+.env
+.env.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+__MACOSX/
+
+# Editor and IDE configs
+.vscode/
+.idea/
+
+# Test output
+coverage/
+*.lcov
+
+# Debug / cache / misc
+.cache/
+.nyc_output/
+*.tsbuildinfo
+
+# Certificates / secrets
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# CI/CD artifacts
+.vercel/
+.netlify/
+.firebase/
+
+# Node build output
+dist/
+build/
+out/
