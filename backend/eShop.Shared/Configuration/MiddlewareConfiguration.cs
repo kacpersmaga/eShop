@@ -11,7 +11,7 @@ public static class MiddlewareConfiguration
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         
-        // app.UseMiddleware<RateLimitingMiddleware>();
+        app.UseMiddleware<RateLimitingMiddleware>();
         
         if (!app.Environment.IsDevelopment())
         {
