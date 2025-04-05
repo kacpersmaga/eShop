@@ -46,8 +46,6 @@ public static class EnvironmentConfiguration
     
     private static void ConfigureTestLogging(LoggerConfiguration loggerConfiguration)
     {
-        // This code should only run in test environments
-        // We'll use conditional compilation for test-specific code
 #if DEBUG
         try
         {
