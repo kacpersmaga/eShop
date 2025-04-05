@@ -18,7 +18,8 @@ public static class CorsConfiguration
             {
                 policy.WithOrigins(configuration[FrontendOriginKey] ?? DefaultFrontendOrigin)
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
 

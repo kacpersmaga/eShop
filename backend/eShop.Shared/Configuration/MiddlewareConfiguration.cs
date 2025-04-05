@@ -13,10 +13,8 @@ public static class MiddlewareConfiguration
         
         app.UseMiddleware<RateLimitingMiddleware>();
         
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseMiddleware<CsrfProtectionMiddleware>();
-        }
+        app.UseMiddleware<CsrfProtectionMiddleware>();
+
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();

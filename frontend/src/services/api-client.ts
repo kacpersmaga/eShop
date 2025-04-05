@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -8,10 +9,20 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 10000,
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use(
   (config) => {
+    const method = config.method?.toUpperCase();
+
+    if (method && method !== 'GET' && method !== 'OPTIONS') {
+      const csrfToken = Cookies.get('XSRF-TOKEN');
+      if (csrfToken) {
+        config.headers['X-CSRF-TOKEN'] = csrfToken;
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
