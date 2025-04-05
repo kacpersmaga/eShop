@@ -11,7 +11,6 @@ COPY ["eShop.Host/eShop.Host.csproj", "eShop.Host/"]
 COPY ["eShop.Infrastructure/eShop.Infrastructure.csproj", "eShop.Infrastructure/"]
 COPY ["eShop.Modules.Catalog/eShop.Modules.Catalog.csproj", "eShop.Modules.Catalog/"]
 COPY ["eShop.Shared/eShop.Shared.csproj", "eShop.Shared/"]
-COPY ["eShop.Modules.Auth/eShop.Modules.Auth.csproj", "eShop.Modules.Auth/"]
 RUN dotnet restore "eShop.Host/eShop.Host.csproj"
 COPY . .
 WORKDIR "/src/eShop.Host"
