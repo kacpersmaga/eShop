@@ -8,6 +8,7 @@ using eShop.Shared.Abstractions.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 
 namespace eShop.Infrastructure.Repositories.Catalog;
 
@@ -19,8 +20,9 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     public CachedProductRepository(
         CatalogDbContext context, 
         ILogger<CachedProductRepository> logger,
-        IDistributedCache cache) 
-        : base(context, logger, cache, TimeSpan.FromMinutes(30))
+        IDistributedCache cache,
+        ConnectionMultiplexer redisConnection)
+        : base(context, logger, cache, redisConnection, TimeSpan.FromMinutes(30))
     {
         _catalogContext = context;
     }

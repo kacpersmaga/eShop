@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using eShop.Modules.Catalog.Domain.Specifications.Builders;
+using Microsoft.EntityFrameworkCore;
 
 namespace eShop.Modules.Catalog.Domain.Specifications;
 

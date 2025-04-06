@@ -4,6 +4,9 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using eShop.Modules.Catalog.Domain.Specifications;
+using eShop.Modules.Catalog.Domain.Specifications.Builders;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using StackExchange.Redis;
 
 namespace eShop.Infrastructure.Repositories.Caching;
 
@@ -14,16 +17,19 @@ namespace eShop.Infrastructure.Repositories.Caching;
 public abstract class CachedSpecificationRepository<T> : SpecificationRepository<T> where T : class
 {
     protected readonly IDistributedCache _cache;
+    private readonly ConnectionMultiplexer _redisConnection;
     private readonly TimeSpan _defaultCacheExpiration;
 
     protected CachedSpecificationRepository(
         DbContext context, 
         ILogger logger, 
         IDistributedCache cache,
+        ConnectionMultiplexer redisConnection,
         TimeSpan? defaultCacheExpiration = null) 
         : base(context, logger)
     {
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _redisConnection = redisConnection ?? throw new ArgumentNullException(nameof(redisConnection));
         _defaultCacheExpiration = defaultCacheExpiration ?? TimeSpan.FromMinutes(10);
     }
 
@@ -145,6 +151,16 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
     public virtual async Task InvalidateCacheAsync(string pattern)
     {
         _logger.LogInformation("Invalidating cache entries with pattern: {Pattern}", pattern);
+    
+        var server = _redisConnection.GetServer(_redisConnection.GetEndPoints().First());
+        var keys = server.Keys(pattern: $"*{pattern}*").ToArray();
+    
+        if (keys.Any())
+        {
+            var db = _redisConnection.GetDatabase();
+            await db.KeyDeleteAsync(keys);
+            _logger.LogInformation("Invalidated {Count} cache entries matching pattern: {Pattern}", keys.Length, pattern);
+        }
     }
 
     /// <summary>

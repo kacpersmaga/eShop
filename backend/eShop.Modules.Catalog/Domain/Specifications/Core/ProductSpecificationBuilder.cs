@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Modules.Catalog.Domain.Specifications.Builders;
 
 namespace eShop.Modules.Catalog.Domain.Specifications;
 

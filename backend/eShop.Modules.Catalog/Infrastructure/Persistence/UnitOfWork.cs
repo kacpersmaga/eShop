@@ -16,7 +16,7 @@ public class UnitOfWork : IUnitOfWork
         CatalogDbContext dbContext,
         IDomainEventDispatcher eventDispatcher,
         ILogger<UnitOfWork> logger,
-        IEnumerable<ICacheInvalidator> cacheInvalidators = null)
+        IEnumerable<ICacheInvalidator>? cacheInvalidators = null)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));

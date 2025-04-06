@@ -1,4 +1,5 @@
 ﻿using eShop.Modules.Catalog.Domain.Specifications;
+using eShop.Modules.Catalog.Domain.Specifications.Builders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

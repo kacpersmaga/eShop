@@ -1,4 +1,5 @@
 ﻿using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Modules.Catalog.Domain.Specifications.Builders;
 
 namespace eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Sorting;
 
@@ -29,9 +30,9 @@ public class ProductsOrderedBySpecification : BaseSpecification<Product>
                 break;
             case "updated":
                 if (ascending)
-                    ApplyOrderBy(p => p.UpdatedAt);
+                    ApplyOrderBy(p => p.UpdatedAt ?? DateTime.MinValue);
                 else
-                    ApplyOrderByDescending(p => p.UpdatedAt);
+                    ApplyOrderByDescending(p => p.UpdatedAt ?? DateTime.MinValue);
                 break;
             default:
                 if (ascending)

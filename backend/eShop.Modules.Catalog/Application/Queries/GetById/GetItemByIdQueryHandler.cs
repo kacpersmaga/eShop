@@ -38,19 +38,27 @@ public class GetItemByIdQueryHandler : IRequestHandler<GetItemByIdQuery, Result<
             }
 
             var product = result.Data;
-            var paged = new PagedProductsDto
+            if (product != null)
             {
-                Items = new List<ProductDto> { product },
-                PageNumber = 1,
-                PageSize = 1,
-                TotalItems = 1,
-                TotalPages = 1,
-                HasPreviousPage = false,
-                HasNextPage = false
-            };
-            
-            _logger.LogInformation("Successfully retrieved product with ID {ItemId}", request.ItemId);
-            return Result<PagedProductsDto>.Success(paged);
+                var paged = new PagedProductsDto
+                {
+                    Items = new List<ProductDto> { product },
+                    PageNumber = 1,
+                    PageSize = 1,
+                    TotalItems = 1,
+                    TotalPages = 1,
+                    HasPreviousPage = false,
+                    HasNextPage = false
+                };
+    
+                _logger.LogInformation("Successfully retrieved product with ID {ItemId}", request.ItemId);
+                return Result<PagedProductsDto>.Success(paged);
+            }
+            else
+            {
+                _logger.LogWarning("Product with ID {ItemId} data is null", request.ItemId);
+                return Result<PagedProductsDto>.Failure("Product data is null");
+            }
         }
         catch (Exception ex)
         {
