@@ -4,7 +4,6 @@ using eShop.Infrastructure.Configuration.Swagger;
 using eShop.Modules.Catalog;
 using eShop.Modules.Catalog.Api;
 using eShop.Shared.Configuration;
-using Microsoft.Data.SqlClient;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +25,7 @@ try
 
     if (!EnvironmentHelpers.IsTestEnvironment(builder.Environment))
     {
-        WaitForDatabase(app.Configuration.GetConnectionString("DefaultConnection")!);
+        app.EnsureDatabaseExists();
         app.ApplyDatabaseMigrations();
     }
 
@@ -48,31 +47,6 @@ catch (Exception ex) when (ex is not HostAbortedException && ex.Source != "Micro
 finally
 {
     Log.CloseAndFlush();
-}
-
-static void WaitForDatabase(string connectionString)
-{
-    const int maxRetries = 10;
-    const int delayMilliseconds = 3000;
-
-    for (int i = 1; i <= maxRetries; i++)
-    {
-        try
-        {
-            using var connection = new SqlConnection(connectionString);
-            connection.Open();
-            Console.WriteLine("✅ Connected to SQL Server.");
-            return;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⏳ Waiting for SQL Server... attempt {i}/{maxRetries}: {ex.Message}");
-            Thread.Sleep(delayMilliseconds);
-        }
-    }
-
-    Console.WriteLine("❌ Failed to connect to SQL Server after multiple attempts.");
-    Environment.Exit(1);
 }
 
 namespace eShop.Host

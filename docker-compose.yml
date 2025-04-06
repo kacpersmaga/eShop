@@ -47,24 +47,10 @@
       - app-network
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=master;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=db;Database=eshop;User Id=sa;Password=Password123!;TrustServerCertificate=True
       - ConnectionStrings__Redis=redis:6379
       - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
-      - JwtSettings__Secret=MyDockerDevSuperSecretKey1234567890
-      - JwtSettings__Issuer=https://localhost:8080
-      - JwtSettings__Audience=eShopAudience
-      - JwtSettings__ExpirationInMinutes=60
-      - EmailSettings__SmtpServer=smtp.gmail.com
-      - EmailSettings__SmtpPort=587
-      - EmailSettings__EnableSsl=true
-      - EmailSettings__SmtpUsername=******
-      - EmailSettings__SmtpPassword=******
-      - EmailSettings__FromEmail=******
-      - EmailSettings__FromName=eShop
-      - TwilioSettings__AccountSid=******
-      - TwilioSettings__AuthToken=******
-      - TwilioSettings__FromPhoneNumber=******
-
+      
   frontend:
     build:
       context: ./frontend

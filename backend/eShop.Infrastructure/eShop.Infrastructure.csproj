@@ -24,8 +24,4 @@
       <ProjectReference Include="..\eShop.Shared\eShop.Shared.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Configuration\Security\" />
-    </ItemGroup>
-
 </Project>

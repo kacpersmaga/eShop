@@ -8,7 +8,7 @@ namespace eShop.Infrastructure.Configuration.Database;
 
 public static class DatabaseMigration
 {
-    public static void ApplyDatabaseMigrations(this IApplicationBuilder app)
+    public static IApplicationBuilder ApplyDatabaseMigrations(this IApplicationBuilder app)
     {
         using var scope = app.ApplicationServices.CreateScope();
         var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
@@ -17,13 +17,17 @@ public static class DatabaseMigration
         try
         {
             var catalogDbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            
+            logger.LogInformation("Applying database migrations...");
             catalogDbContext.Database.Migrate();
-            logger.LogInformation("CatalogDbContext migrations applied successfully.");
+            logger.LogInformation("Database migrations applied successfully.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while migrating the CatalogDbContext database.");
+            logger.LogError(ex, "An error occurred while applying database migrations.");
             throw;
         }
+        
+        return app;
     }
 }
