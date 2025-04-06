@@ -27,7 +27,7 @@ const FeaturedProducts = () => {
       try {
         const result = await catalogService.getProducts();
 
-        if (result.succeeded) {
+        if (result.success) {
           const productItems = result.data?.items || [];
 
           const origin = typeof window !== "undefined" ? window.location.origin : "";

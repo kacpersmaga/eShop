@@ -123,7 +123,7 @@ export default function ProductsPage() {
       
       if (searchTerm) {
         result = await catalogService.searchProducts(searchTerm);
-        if (result.succeeded) {
+        if (result.success) {
           const productItems = result.data?.items || [];
           setProducts(Array.isArray(productItems) ? productItems : []);
           setTotalPages(result.data?.totalPages || 1);
@@ -133,7 +133,7 @@ export default function ProductsPage() {
       } 
       else if (priceRange.min > 0 || priceRange.max < 300) {
         result = await catalogService.getProductsByPriceRange(priceRange.min, priceRange.max);
-        if (result.succeeded) {
+        if (result.success) {
           const productItems = result.data?.items || [];
           setProducts(Array.isArray(productItems) ? productItems : []);
           setTotalPages(result.data?.totalPages || 1);
@@ -150,7 +150,7 @@ export default function ProductsPage() {
           ascending
         );
         
-        if (result.succeeded) {
+        if (result.success) {
           const productItems = result.data?.items || [];
           setProducts(Array.isArray(productItems) ? productItems : []);
           setTotalPages(result.data?.totalPages || 1);

@@ -6,11 +6,12 @@ using eShop.Modules.Catalog.Application.Queries.Search.ByCategory;
 using eShop.Modules.Catalog.Application.Queries.Search.ByPriceRnage;
 using eShop.Modules.Catalog.Application.Queries.Search.Paged;
 using eShop.Modules.Catalog.Application.Queries.Search.TextSearch;
-using eShop.Shared.Abstractions.Primitives;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using eShop.Shared.Api;
 
 namespace eShop.Modules.Catalog.Api;
 
@@ -19,7 +20,7 @@ namespace eShop.Modules.Catalog.Api;
 /// </summary>
 [ApiController]
 [Route("api/catalog")]
-public class CatalogController : ControllerBase
+public class CatalogController : ApiControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<CatalogController> _logger;
@@ -65,7 +66,7 @@ public class CatalogController : ControllerBase
                 var pagedResult = await _mediator.Send(new GetPagedProductsQuery(
                     page.Value, pageSize.Value, category, sortBy, ascending ?? true));
             
-                return pagedResult.Succeeded ? Ok(pagedResult) : BadRequest(pagedResult);
+                return FromResult(pagedResult);
             }
         
             if (!string.IsNullOrEmpty(category))
@@ -73,18 +74,19 @@ public class CatalogController : ControllerBase
                 _logger.LogInformation("Executing GetItemsByCategoryQuery for category {Category}...", category);
                 var categoryResult = await _mediator.Send(new GetItemsByCategoryQuery(category));
             
-                return categoryResult.Succeeded ? Ok(categoryResult) : BadRequest(categoryResult);
+                return FromResult(categoryResult);
             }
         
             _logger.LogInformation("Executing GetAllItemsQuery query...");
             var result = await _mediator.Send(new GetAllItemsQuery());
         
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching products.");
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<PagedProductsDto>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -106,18 +108,19 @@ public class CatalogController : ControllerBase
         {
             if (string.IsNullOrEmpty(term))
             {
-                return BadRequest(Result.Failure("Search term cannot be empty."));
+                return BadRequestResponse<PagedProductsDto>("Search term cannot be empty.");
             }
         
             _logger.LogInformation("Executing SearchProductsQuery with term {SearchTerm}...", term);
             var result = await _mediator.Send(new SearchProductsQuery(term));
         
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while searching products.");
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<PagedProductsDto>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -140,12 +143,18 @@ public class CatalogController : ControllerBase
             _logger.LogInformation("Executing GetItemByIdQuery query for ID {ProductId}...", id);
             var result = await _mediator.Send(new GetItemByIdQuery(id));
         
-            return result.Succeeded ? Ok(result) : NotFound(result);
+            if (!result.Succeeded && result.Errors.Any(e => e.Contains("not found")))
+            {
+                return NotFoundResponse<PagedProductsDto>($"Product with ID {id} not found.");
+            }
+            
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching product with ID {ProductId}.", id);
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<PagedProductsDto>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -168,18 +177,19 @@ public class CatalogController : ControllerBase
         {
             if (minPrice < 0 || maxPrice < minPrice)
             {
-                return BadRequest(Result.Failure("Invalid price range."));
+                return BadRequestResponse<PagedProductsDto>("Invalid price range.");
             }
         
             _logger.LogInformation("Executing GetProductsByPriceRangeQuery with range {MinPrice} to {MaxPrice}...", minPrice, maxPrice);
             var result = await _mediator.Send(new GetProductsByPriceRangeQuery(minPrice, maxPrice));
         
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching products by price range.");
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<PagedProductsDto>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -188,23 +198,26 @@ public class CatalogController : ControllerBase
     /// </summary>
     /// <param name="form">Product details and image</param>
     /// <returns>Result indicating success or failure with the created product details</returns>
-    /// <response code="200">Returns the newly created product</response>
+    /// <response code="201">Returns the newly created product</response>
     /// <response code="400">If the product data is invalid</response>
+    /// <response code="500">If there was an internal server error</response>
     [HttpPost("products")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> AddProduct([FromForm] CreateProductDto form)
     {
         try
         {
             _logger.LogInformation("Executing AddItemCommand...");
             var result = await _mediator.Send(new AddItemCommand(form, form.Image));
-            return result.Succeeded ? Ok(result) : BadRequest(result);
+            return FromResult(result, (int)HttpStatusCode.Created);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while creating a new product.");
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<string>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -229,13 +242,19 @@ public class CatalogController : ControllerBase
         {
             _logger.LogInformation("Executing UpdateItemCommand for ID {ProductId}...", id);
             var result = await _mediator.Send(new UpdateItemCommand(id, form, form.Image));
-            return result.Succeeded ? Ok(result) :
-                result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
+            
+            if (!result.Succeeded && result.Errors.Any(e => e.Contains("not found")))
+            {
+                return NotFoundResponse<string>($"Product with ID {id} not found.");
+            }
+            
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while updating product with ID {ProductId}.", id);
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<string>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 
@@ -260,13 +279,18 @@ public class CatalogController : ControllerBase
             _logger.LogInformation("Executing DeleteItemCommand command for ID {ProductId}...", id);
             var result = await _mediator.Send(new DeleteItemCommand(id));
             
-            return result.Succeeded ? Ok(result) :
-                result.Errors.Any(e => e.Contains("not found")) ? NotFound(result) : BadRequest(result);
+            if (!result.Succeeded && result.Errors.Any(e => e.Contains("not found")))
+            {
+                return NotFoundResponse<string>($"Product with ID {id} not found.");
+            }
+            
+            return FromResult(result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while deleting product with ID {ProductId}.", id);
-            return StatusCode(500, Result.Failure("An error occurred while processing your request."));
+            return ErrorResponse<string>("An error occurred while processing your request.", 
+                (int)HttpStatusCode.InternalServerError);
         }
     }
 }

@@ -69,7 +69,7 @@ export default function AdminPage() {
       }
       
       const result = await catalogService.getProducts();
-      if (result.succeeded) {
+      if (result.success) {
         const productItems = result.data?.items || [];
         setProducts(Array.isArray(productItems) ? productItems : []);
       } else {
@@ -142,7 +142,7 @@ export default function AdminPage() {
       
       const result = await catalogService.createProduct(productDto);
       
-      if (result.succeeded) {
+      if (result.success) {
         showToast({
           title: "Product Created",
           description: "The product has been successfully created.",
@@ -207,7 +207,7 @@ export default function AdminPage() {
       
       const result = await catalogService.updateProduct(modal.product.id, productDto);
       
-      if (result.succeeded) {
+      if (result.success) {
         showToast({
           title: "Product Updated",
           description: "The product has been successfully updated.",
@@ -250,7 +250,7 @@ export default function AdminPage() {
       
       const result = await catalogService.deleteProduct(id);
       
-      if (result.succeeded) {
+      if (result.success) {
         showToast({
           title: "Product Deleted",
           description: "The product has been successfully deleted.",

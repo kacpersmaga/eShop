@@ -10,7 +10,6 @@ import catalogService, { Product } from "@/services/catalog-service";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-// Define a specific error type to avoid 'any'
 interface ApiError {
   message: string;
   status?: number;
@@ -27,7 +26,6 @@ export default function ProductDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  // Fetch product details from API
   useEffect(() => {
     const loadProduct = async () => {
       if (!id) return;
@@ -38,7 +36,7 @@ export default function ProductDetailPage() {
       try {
         const result = await catalogService.getProductByIdSimple(Number(id));
         
-        if (result.succeeded && result.product) {
+        if (result.success && result.product) {
           setProduct(result.product);
         } else {
           setError(result.errors?.join(', ') || 'Product not found');
@@ -55,7 +53,6 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [id]);
   
-  // Handle quantity change
   const handleQuantityChange = (delta: number) => {
     setQuantity(prev => {
       const newQuantity = prev + delta;
@@ -63,12 +60,9 @@ export default function ProductDetailPage() {
     });
   };
   
-  // Handle add to cart
   const handleAddToCart = () => {
     if (!product) return;
     
-    // Here you would add the product to cart state/context
-    // For now, we'll just show an alert
     alert(`Added ${quantity} ${product.name} to cart`);
   };
   
@@ -166,7 +160,7 @@ export default function ProductDetailPage() {
                   )}
                 </div>
                 
-                {/* Rating - Mock data since our API doesn't provide ratings */}
+                {/* Rating*/}
                 <div className="flex items-center mb-6">
                   <div className="flex">
                     {[1, 2, 3, 4, 5].map((star) => (

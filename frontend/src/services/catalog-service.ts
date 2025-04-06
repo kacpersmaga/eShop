@@ -30,18 +30,24 @@ export interface UpdateProductDto {
   image?: File;
 }
 
-export interface PagedResult<T> {
-  data: {
-    items: T[];
-    totalItems: number;
-    totalPages: number;
-    pageNumber: number;
-    pageSize: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-  succeeded: boolean;
-  errors: string[];
+export interface ApiResponse<T> {
+  success: boolean;
+  statusCode: number;
+  message?: string;
+  data?: T;
+  errors?: string[];
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+export interface PagedData {
+  items: Product[];
+  totalItems: number;
+  totalPages: number;
+  pageNumber: number;
+  pageSize: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 function transformProduct(apiProduct: any): Product {
@@ -67,7 +73,7 @@ const catalogService = {
     category?: string,
     sortBy?: string,
     ascending?: boolean
-  ): Promise<PagedResult<Product>> => {
+  ): Promise<ApiResponse<PagedData>> => {
     let url = "/catalog/products";
     const params = new URLSearchParams();
 
@@ -82,12 +88,16 @@ const catalogService = {
     }
 
     const response = await apiClient.get(url);
-    const raw = response.data;  
-
-    if (raw?.data?.items && Array.isArray(raw.data.items)) {
-      raw.data.items = raw.data.items.map(transformProduct);
+    const apiResponse = response.data as ApiResponse<PagedData>;
+    
+    if (apiResponse.data?.items && Array.isArray(apiResponse.data.items)) {
+      apiResponse.data.items = apiResponse.data.items.map(transformProduct);
+    } else if (apiResponse.data) {
+      // Ensure we always have a valid items array
+      apiResponse.data.items = [];
     } else {
-      raw.data = {
+      // Create a default empty response if data is missing
+      apiResponse.data = {
         items: [],
         totalItems: 0,
         totalPages: 0,
@@ -98,21 +108,19 @@ const catalogService = {
       };
     }
 
-    return {
-      data: raw.data,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? ["Unexpected response format"]
-    };
+    return apiResponse;
   },
 
-  searchProducts: async (term: string): Promise<PagedResult<Product>> => {
+  searchProducts: async (term: string): Promise<ApiResponse<PagedData>> => {
     const response = await apiClient.get(`/catalog/products/search?term=${encodeURIComponent(term)}`);
-    const raw = response.data;
-
-    if (raw?.data?.items && Array.isArray(raw.data.items)) {
-      raw.data.items = raw.data.items.map(transformProduct);
+    const apiResponse = response.data as ApiResponse<PagedData>;
+    
+    if (apiResponse.data?.items && Array.isArray(apiResponse.data.items)) {
+      apiResponse.data.items = apiResponse.data.items.map(transformProduct);
+    } else if (apiResponse.data) {
+      apiResponse.data.items = [];
     } else {
-      raw.data = {
+      apiResponse.data = {
         items: [],
         totalItems: 0,
         totalPages: 0,
@@ -123,21 +131,19 @@ const catalogService = {
       };
     }
 
-    return {
-      data: raw.data,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
-    };
+    return apiResponse;
   },
 
-  getProductById: async (id: number): Promise<PagedResult<Product>> => {
+  getProductById: async (id: number): Promise<ApiResponse<PagedData>> => {
     const response = await apiClient.get(`/catalog/products/${id}`);
-    const raw = response.data;
+    const apiResponse = response.data as ApiResponse<PagedData>;
 
-    if (raw?.data?.items && Array.isArray(raw.data.items) && raw.data.items.length > 0) {
-      raw.data.items = raw.data.items.map(transformProduct);
+    if (apiResponse.data?.items && Array.isArray(apiResponse.data.items)) {
+      apiResponse.data.items = apiResponse.data.items.map(transformProduct);
+    } else if (apiResponse.data) {
+      apiResponse.data.items = [];
     } else {
-      raw.data = {
+      apiResponse.data = {
         items: [],
         totalItems: 0,
         totalPages: 0,
@@ -148,49 +154,43 @@ const catalogService = {
       };
     }
 
-    return {
-      data: raw.data,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
-    };
+    return apiResponse;
   },
 
-  getProductByIdSimple: async (id: number): Promise<{product: Product | null, succeeded: boolean, errors: string[]}> => {
+  getProductByIdSimple: async (id: number): Promise<{product: Product | null, success: boolean, errors?: string[]}> => {
     const result = await catalogService.getProductById(id);
     
     return {
-      product: result.data.items.length > 0 ? result.data.items[0] : null,
-      succeeded: result.succeeded,
+      product: result.data?.items.length ? result.data.items[0] : null,
+      success: result.success,
       errors: result.errors
     };
   },
 
-  getProductsByPriceRange: async (minPrice: number, maxPrice: number): Promise<PagedResult<Product>> => {
+  getProductsByPriceRange: async (minPrice: number, maxPrice: number): Promise<ApiResponse<PagedData>> => {
     const response = await apiClient.get(`/catalog/products/price-range?minPrice=${minPrice}&maxPrice=${maxPrice}`);
-    const raw = response.data;
+    const apiResponse = response.data as ApiResponse<PagedData>;
 
-    if (raw?.data?.items && Array.isArray(raw.data.items)) {
-      raw.data.items = raw.data.items.map(transformProduct);
+    if (apiResponse.data?.items && Array.isArray(apiResponse.data.items)) {
+      apiResponse.data.items = apiResponse.data.items.map(transformProduct);
+    } else if (apiResponse.data) {
+      apiResponse.data.items = [];
     } else {
-      raw.data = {
+      apiResponse.data = {
         items: [],
         totalItems: 0,
         totalPages: 0,
-        pageNumber: 1, 
+        pageNumber: 1,
         pageSize: 0,
         hasNextPage: false,
         hasPreviousPage: false
       };
     }
 
-    return {
-      data: raw.data,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
-    };
+    return apiResponse;
   },
 
-  createProduct: async (productData: CreateProductDto): Promise<{product: Product | null, succeeded: boolean, errors: string[]}> => {
+  createProduct: async (productData: CreateProductDto): Promise<{product: Product | null, success: boolean, errors?: string[], message?: string}> => {
     const formData = new FormData();
     formData.append("name", productData.name);
     formData.append("price", productData.price.toString());
@@ -205,21 +205,21 @@ const catalogService = {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    const raw = response.data;
+    const apiResponse = response.data as ApiResponse<string>;
     
     let product = null;
-    if (raw?.data) {
-      product = transformProduct(raw.data);
-    }
-
+    // Since we're returning a string success message, we'll need
+    // to fetch the product separately if needed
+    
     return {
       product,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
+      success: apiResponse.success,
+      errors: apiResponse.errors,
+      message: apiResponse.message
     };
   },
 
-  updateProduct: async (id: number, productData: UpdateProductDto): Promise<{product: Product | null, succeeded: boolean, errors: string[]}> => {
+  updateProduct: async (id: number, productData: UpdateProductDto): Promise<{product: Product | null, success: boolean, errors?: string[], message?: string}> => {
     const formData = new FormData();
     formData.append("name", productData.name);
     formData.append("price", productData.price.toString());
@@ -234,27 +234,24 @@ const catalogService = {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    const raw = response.data;
+    const apiResponse = response.data as ApiResponse<string>;
     
-    let product = null;
-    if (raw?.data) {
-      product = transformProduct(raw.data);
-    }
-
     return {
-      product,
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
+      product: null, // Similar to create, we would need to fetch the updated product separately
+      success: apiResponse.success,
+      errors: apiResponse.errors,
+      message: apiResponse.message
     };
   },
 
-  deleteProduct: async (id: number): Promise<{succeeded: boolean, errors: string[]}> => {
+  deleteProduct: async (id: number): Promise<{success: boolean, errors?: string[], message?: string}> => {
     const response = await apiClient.delete(`/catalog/products/${id}`);
-    const raw = response.data;
+    const apiResponse = response.data as ApiResponse<string>;
 
     return {
-      succeeded: raw.succeeded ?? false,
-      errors: raw.errors ?? []
+      success: apiResponse.success,
+      errors: apiResponse.errors,
+      message: apiResponse.message
     };
   },
 };
