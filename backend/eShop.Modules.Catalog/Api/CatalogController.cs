@@ -1,6 +1,5 @@
 ﻿using eShop.Modules.Catalog.Application.Commands;
 using eShop.Modules.Catalog.Application.Dtos;
-using eShop.Modules.Catalog.Application.Queries;
 using eShop.Modules.Catalog.Application.Queries.GetAll;
 using eShop.Modules.Catalog.Application.Queries.GetById;
 using eShop.Modules.Catalog.Application.Queries.Search.ByCategory;

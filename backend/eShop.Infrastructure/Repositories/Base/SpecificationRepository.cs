@@ -12,13 +12,13 @@ namespace eShop.Infrastructure.Repositories.Base;
 /// <typeparam name="T">The entity type this repository works with</typeparam>
 public abstract class SpecificationRepository<T> where T : class
 {
-    protected readonly DbContext _context;
-    protected readonly ILogger _logger;
+    protected readonly DbContext Context;
+    protected readonly ILogger Logger;
 
     protected SpecificationRepository(DbContext context, ILogger logger)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        Context = context ?? throw new ArgumentNullException(nameof(context));
+        Logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public abstract class SpecificationRepository<T> where T : class
     /// <returns>The matching entity or null if not found</returns>
     public virtual async Task<T?> GetBySpecAsync(ISpecification<T> spec)
     {
-        _logger.LogInformation("Fetching entity by specification");
+        Logger.LogInformation("Fetching entity by specification");
         return await ApplySpecification(spec).FirstOrDefaultAsync();
     }
 
@@ -39,7 +39,7 @@ public abstract class SpecificationRepository<T> where T : class
     /// <returns>A list of matching entities</returns>
     public virtual async Task<IEnumerable<T>> ListAsync(ISpecification<T> spec)
     {
-        _logger.LogInformation("Fetching entities list by specification");
+        Logger.LogInformation("Fetching entities list by specification");
         return await ApplySpecification(spec).ToListAsync();
     }
 
@@ -50,7 +50,7 @@ public abstract class SpecificationRepository<T> where T : class
     /// <returns>The count of matching entities</returns>
     public virtual async Task<int> CountAsync(ISpecification<T> spec)
     {
-        _logger.LogInformation("Counting entities by specification");
+        Logger.LogInformation("Counting entities by specification");
         return await ApplySpecification(spec).CountAsync();
     }
 
@@ -61,6 +61,6 @@ public abstract class SpecificationRepository<T> where T : class
     /// <returns>An IQueryable with the specification applied</returns>
     protected virtual IQueryable<T> ApplySpecification(ISpecification<T> spec)
     {
-        return SpecificationEvaluator<T>.GetQuery(_context.Set<T>().AsQueryable(), spec);
+        return SpecificationEvaluator<T>.GetQuery(Context.Set<T>().AsQueryable(), spec);
     }
 }

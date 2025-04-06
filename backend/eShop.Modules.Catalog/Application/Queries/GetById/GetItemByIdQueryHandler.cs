@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using eShop.Modules.Catalog.Application.Dtos;
+﻿using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Application.Services;
 using eShop.Shared.Abstractions.Primitives;
 using MediatR;
@@ -10,16 +9,13 @@ namespace eShop.Modules.Catalog.Application.Queries.GetById;
 public class GetItemByIdQueryHandler : IRequestHandler<GetItemByIdQuery, Result<PagedProductsDto>>
 {
     private readonly IProductService _productService;
-    private readonly IMapper _mapper;
     private readonly ILogger<GetItemByIdQueryHandler> _logger;
 
     public GetItemByIdQueryHandler(
         IProductService productService,
-        IMapper mapper,
         ILogger<GetItemByIdQueryHandler> logger)
     {
         _productService = productService ?? throw new ArgumentNullException(nameof(productService));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 

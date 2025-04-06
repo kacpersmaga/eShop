@@ -1,5 +1,4 @@
 ﻿using eShop.Modules.Catalog.Domain.Aggregates;
-using eShop.Modules.Catalog.Domain.Specifications;
 using eShop.Modules.Catalog.Domain.Specifications.Builders;
 
 namespace eShop.Modules.Catalog.Domain.Repositories;

@@ -1,6 +1,6 @@
 using eShop.Shared.Abstractions.Primitives;
 
-namespace eShop.Modules.Catalog.Application.Services;
+namespace eShop.Shared.Abstractions.Interfaces.Storage;
 
 public interface IImageService
 {

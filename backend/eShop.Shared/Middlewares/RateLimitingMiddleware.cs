@@ -1,11 +1,11 @@
 ﻿using System.Net;
-using Microsoft.Extensions.Caching.Memory;
 using eShop.Shared.Settings;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace eShop.Extensions.Middlewares;
+namespace eShop.Shared.Middlewares;
 
 public class RateLimitingMiddleware(
     RequestDelegate next,

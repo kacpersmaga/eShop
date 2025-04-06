@@ -34,7 +34,6 @@ try
     app.UseSwaggerDocs(builder.Environment);
 
     app.MapControllers();
-    app.MapCatalogEndpoints();
 
     app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
     app.Run();

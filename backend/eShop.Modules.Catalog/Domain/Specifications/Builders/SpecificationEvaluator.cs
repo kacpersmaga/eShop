@@ -1,7 +1,6 @@
-﻿using eShop.Modules.Catalog.Domain.Specifications.Builders;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace eShop.Modules.Catalog.Domain.Specifications;
+namespace eShop.Modules.Catalog.Domain.Specifications.Builders;
 
 public class SpecificationEvaluator<T> where T : class
 {

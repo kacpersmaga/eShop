@@ -1,7 +1,5 @@
-﻿using eShop.Extensions.Middlewares;
-using eShop.Shared.Middlewares;
+﻿using eShop.Shared.Middlewares;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
 
 namespace eShop.Shared.Configuration;
 

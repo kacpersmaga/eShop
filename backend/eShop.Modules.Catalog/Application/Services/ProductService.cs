@@ -4,7 +4,7 @@ using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Exceptions;
 using eShop.Modules.Catalog.Domain.Repositories;
 using eShop.Modules.Catalog.Domain.Specifications;
-using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs;
+using eShop.Modules.Catalog.Domain.Specifications.Core;
 using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Availability;
 using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Filtering;
 using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs.Price;
@@ -171,7 +171,7 @@ public class ProductService : IProductService
             }
             else
             {
-                builder.OrderByName(true);
+                builder.OrderByName(ascending);
             }
             
             var spec = builder.Build();

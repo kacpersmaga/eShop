@@ -16,7 +16,7 @@ public static class RedisConfiguration
             options.InstanceName = "eShop_";
         });
         
-        services.AddSingleton<ConnectionMultiplexer>(sp => 
+        services.AddSingleton<ConnectionMultiplexer>(_ => 
             ConnectionMultiplexer.Connect(redisConnectionString));
 
         return services;

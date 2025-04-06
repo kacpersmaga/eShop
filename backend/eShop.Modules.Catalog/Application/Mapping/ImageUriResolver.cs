@@ -2,6 +2,7 @@
 using eShop.Modules.Catalog.Application.Dtos;
 using eShop.Modules.Catalog.Application.Services;
 using eShop.Modules.Catalog.Domain.Aggregates;
+using eShop.Shared.Abstractions.Interfaces.Storage;
 
 namespace eShop.Modules.Catalog.Application.Mapping;
 

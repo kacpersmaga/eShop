@@ -1,7 +1,5 @@
-﻿using eShop.Modules.Catalog.Application.Queries;
-using eShop.Modules.Catalog.Application.Queries.GetAll;
+﻿using eShop.Modules.Catalog.Application.Queries.GetAll;
 using eShop.Modules.Catalog.Configuration;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,8 +19,4 @@ public static class CatalogModuleConfiguration
         return services;
     }
     
-    public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder endpoints)
-    {
-        return endpoints;
-    }
 }

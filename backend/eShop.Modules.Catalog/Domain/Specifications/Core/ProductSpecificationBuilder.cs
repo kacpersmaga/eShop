@@ -1,17 +1,18 @@
 ﻿using System.Linq.Expressions;
 using eShop.Modules.Catalog.Domain.Aggregates;
 using eShop.Modules.Catalog.Domain.Specifications.Builders;
+using eShop.Modules.Catalog.Domain.Specifications.ProductSpecs;
 
-namespace eShop.Modules.Catalog.Domain.Specifications;
+namespace eShop.Modules.Catalog.Domain.Specifications.Core;
 
 public class ProductSpecificationBuilder
 {
     private readonly List<Expression<Func<Product, bool>>> _criteria = new();
     private Expression<Func<Product, object>>? _orderByExpression;
     private Expression<Func<Product, object>>? _orderByDescendingExpression;
-    private int _skip = 0;
+    private int _skip;
     private int _take = int.MaxValue;
-    private bool _isPagingEnabled = false;
+    private bool _isPagingEnabled;
 
     public ProductSpecificationBuilder WithCriteria(Expression<Func<Product, bool>> criteria)
     {
@@ -150,33 +151,6 @@ public class ProductSpecificationBuilder
         protected override Expression VisitParameter(ParameterExpression node)
         {
             return ReferenceEquals(node, _oldParam) ? _newParam : base.VisitParameter(node);
-        }
-    }
-}
-
-public class CustomProductSpecification : BaseSpecification<Product>
-{
-    public CustomProductSpecification(
-        Expression<Func<Product, bool>> criteria,
-        Expression<Func<Product, object>>? orderByExpression,
-        Expression<Func<Product, object>>? orderByDescendingExpression,
-        int skip,
-        int take,
-        bool isPagingEnabled)
-        : base(criteria)
-    {
-        if (orderByExpression != null)
-        {
-            ApplyOrderBy(orderByExpression);
-        }
-        else if (orderByDescendingExpression != null)
-        {
-            ApplyOrderByDescending(orderByDescendingExpression);
-        }
-
-        if (isPagingEnabled)
-        {
-            ApplyPaging(skip, take);
         }
     }
 }

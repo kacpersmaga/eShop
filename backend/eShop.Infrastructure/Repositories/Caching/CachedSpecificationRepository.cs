@@ -3,9 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using eShop.Modules.Catalog.Domain.Specifications;
 using eShop.Modules.Catalog.Domain.Specifications.Builders;
-using Microsoft.Extensions.Caching.StackExchangeRedis;
 using StackExchange.Redis;
 
 namespace eShop.Infrastructure.Repositories.Caching;
@@ -16,7 +14,7 @@ namespace eShop.Infrastructure.Repositories.Caching;
 /// <typeparam name="T">The entity type this repository works with</typeparam>
 public abstract class CachedSpecificationRepository<T> : SpecificationRepository<T> where T : class
 {
-    protected readonly IDistributedCache _cache;
+    protected readonly IDistributedCache Cache;
     private readonly ConnectionMultiplexer _redisConnection;
     private readonly TimeSpan _defaultCacheExpiration;
 
@@ -28,7 +26,7 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         TimeSpan? defaultCacheExpiration = null) 
         : base(context, logger)
     {
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        Cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _redisConnection = redisConnection ?? throw new ArgumentNullException(nameof(redisConnection));
         _defaultCacheExpiration = defaultCacheExpiration ?? TimeSpan.FromMinutes(10);
     }
@@ -71,14 +69,14 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         cacheKey ??= GenerateCacheKey(spec, "GetBySpec");
         cacheTime ??= _defaultCacheExpiration;
 
-        var cachedData = await _cache.GetStringAsync(cacheKey);
+        var cachedData = await Cache.GetStringAsync(cacheKey);
         if (!string.IsNullOrEmpty(cachedData))
         {
-            _logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
+            Logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
             return JsonSerializer.Deserialize<T>(cachedData);
         }
 
-        _logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
+        Logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
         var result = await base.GetBySpecAsync(spec);
 
         if (result != null)
@@ -100,14 +98,14 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         cacheKey ??= GenerateCacheKey(spec, "ListAsync");
         cacheTime ??= _defaultCacheExpiration;
 
-        var cachedData = await _cache.GetStringAsync(cacheKey);
+        var cachedData = await Cache.GetStringAsync(cacheKey);
         if (!string.IsNullOrEmpty(cachedData))
         {
-            _logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
+            Logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
             return JsonSerializer.Deserialize<List<T>>(cachedData) ?? new List<T>();
         }
 
-        _logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
+        Logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
         var result = await base.ListAsync(spec);
 
         var resultList = result.ToList();
@@ -130,14 +128,14 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         cacheKey ??= GenerateCacheKey(spec, "CountAsync");
         cacheTime ??= _defaultCacheExpiration;
 
-        var cachedData = await _cache.GetStringAsync(cacheKey);
+        var cachedData = await Cache.GetStringAsync(cacheKey);
         if (!string.IsNullOrEmpty(cachedData))
         {
-            _logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
+            Logger.LogInformation("Cache hit for key: {CacheKey}", cacheKey);
             return JsonSerializer.Deserialize<int>(cachedData);
         }
 
-        _logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
+        Logger.LogInformation("Cache miss for key: {CacheKey}", cacheKey);
         var result = await base.CountAsync(spec);
 
         await CacheDataAsync(cacheKey, result, cacheTime.Value);
@@ -150,7 +148,7 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
     /// </summary>
     public virtual async Task InvalidateCacheAsync(string pattern)
     {
-        _logger.LogInformation("Invalidating cache entries with pattern: {Pattern}", pattern);
+        Logger.LogInformation("Invalidating cache entries with pattern: {Pattern}", pattern);
     
         var server = _redisConnection.GetServer(_redisConnection.GetEndPoints().First());
         var keys = server.Keys(pattern: $"*{pattern}*").ToArray();
@@ -159,7 +157,7 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         {
             var db = _redisConnection.GetDatabase();
             await db.KeyDeleteAsync(keys);
-            _logger.LogInformation("Invalidated {Count} cache entries matching pattern: {Pattern}", keys.Length, pattern);
+            Logger.LogInformation("Invalidated {Count} cache entries matching pattern: {Pattern}", keys.Length, pattern);
         }
     }
 
@@ -169,8 +167,8 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
     /// <param name="cacheKey">The cache key to invalidate</param>
     public virtual async Task InvalidateCacheKeyAsync(string cacheKey)
     {
-        _logger.LogInformation("Invalidating cache key: {CacheKey}", cacheKey);
-        await _cache.RemoveAsync(cacheKey);
+        Logger.LogInformation("Invalidating cache key: {CacheKey}", cacheKey);
+        await Cache.RemoveAsync(cacheKey);
     }
 
     /// <summary>
@@ -187,7 +185,7 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         string criteriaHash = "none";
         if (spec.Criteria != null)
         {
-            criteriaHash = spec.Criteria.ToString()?.GetHashCode().ToString() ?? "unknown";
+            criteriaHash = spec.Criteria.ToString().GetHashCode().ToString();
         }
         
         string pagingInfo = spec.IsPagingEnabled 
@@ -217,7 +215,7 @@ public abstract class CachedSpecificationRepository<T> : SpecificationRepository
         };
 
         var serializedData = JsonSerializer.Serialize(data);
-        await _cache.SetStringAsync(cacheKey, serializedData, options);
-        _logger.LogInformation("Data cached with key: {CacheKey}, expires in: {CacheTime}", cacheKey, cacheTime);
+        await Cache.SetStringAsync(cacheKey, serializedData, options);
+        Logger.LogInformation("Data cached with key: {CacheKey}, expires in: {CacheTime}", cacheKey, cacheTime);
     }
 }

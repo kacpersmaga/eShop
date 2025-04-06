@@ -19,19 +19,19 @@ public class ProductRepository : SpecificationRepository<Product>, IProductRepos
 
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
-        _logger.LogInformation("Fetching all products from the database");
+        Logger.LogInformation("Fetching all products from the database");
         return await _catalogContext.Products.AsNoTracking().ToListAsync();
     }
 
     public async Task<Product?> GetByIdAsync(int id)
     {
-        _logger.LogInformation("Fetching product with ID {ProductId} from the database", id);
+        Logger.LogInformation("Fetching product with ID {ProductId} from the database", id);
         return await _catalogContext.Products.FindAsync(id);
     }
 
     public async Task<IEnumerable<Product>> GetByCategoryAsync(string category)
     {
-        _logger.LogInformation("Fetching products in category '{Category}' from the database", category);
+        Logger.LogInformation("Fetching products in category '{Category}' from the database", category);
         return await _catalogContext.Products
             .Where(p => p.Category.Value == category && p.IsAvailable)
             .AsNoTracking()
@@ -40,7 +40,7 @@ public class ProductRepository : SpecificationRepository<Product>, IProductRepos
 
     public async Task<Product?> GetByNameAsync(string name)
     {
-        _logger.LogInformation("Fetching product with name '{ProductName}'", name);
+        Logger.LogInformation("Fetching product with name '{ProductName}'", name);
         return await _catalogContext.Products
             .FirstOrDefaultAsync(p => p.Name.Value == name);
     }
@@ -55,7 +55,7 @@ public class ProductRepository : SpecificationRepository<Product>, IProductRepos
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
+        Logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
         await _catalogContext.Products.AddAsync(product);
     }
 
@@ -63,7 +63,7 @@ public class ProductRepository : SpecificationRepository<Product>, IProductRepos
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
+        Logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
         
         _catalogContext.Entry(product).State = EntityState.Modified;
         
@@ -74,7 +74,7 @@ public class ProductRepository : SpecificationRepository<Product>, IProductRepos
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
+        Logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
         _catalogContext.Products.Remove(product);
         
         return Task.CompletedTask;

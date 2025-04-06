@@ -30,15 +30,15 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     public async Task<IEnumerable<Product>> GetAllAsync()
     {
         var cacheKey = $"{_cacheKeyPrefix}GetAll";
-        var cachedData = await _cache.GetStringAsync(cacheKey);
+        var cachedData = await Cache.GetStringAsync(cacheKey);
         
         if (!string.IsNullOrEmpty(cachedData))
         {
-            _logger.LogInformation("Cache hit for GetAllAsync");
+            Logger.LogInformation("Cache hit for GetAllAsync");
             return JsonSerializer.Deserialize<List<Product>>(cachedData) ?? new List<Product>();
         }
 
-        _logger.LogInformation("Cache miss for GetAllAsync");
+        Logger.LogInformation("Cache miss for GetAllAsync");
         var products = await _catalogContext.Products.AsNoTracking().ToListAsync();
         
         if (products.Any())
@@ -52,15 +52,15 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     public async Task<Product?> GetByIdAsync(int id)
     {
         var cacheKey = $"{_cacheKeyPrefix}Id_{id}";
-        var cachedData = await _cache.GetStringAsync(cacheKey);
+        var cachedData = await Cache.GetStringAsync(cacheKey);
         
         if (!string.IsNullOrEmpty(cachedData))
         {
-            _logger.LogInformation("Cache hit for GetByIdAsync: {ProductId}", id);
+            Logger.LogInformation("Cache hit for GetByIdAsync: {ProductId}", id);
             return JsonSerializer.Deserialize<Product>(cachedData);
         }
 
-        _logger.LogInformation("Cache miss for GetByIdAsync: {ProductId}", id);
+        Logger.LogInformation("Cache miss for GetByIdAsync: {ProductId}", id);
         var product = await _catalogContext.Products.FindAsync(id);
         
         if (product != null)
@@ -96,7 +96,7 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
+        Logger.LogInformation("Adding a new product: {Name}", product.Name.Value);
         await _catalogContext.Products.AddAsync(product);
     }
     
@@ -104,7 +104,7 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
+        Logger.LogInformation("Updating product with ID {ProductId}: {Name}", product.Id, product.Name.Value);
         _catalogContext.Entry(product).State = EntityState.Modified;
         
         return Task.CompletedTask;
@@ -114,7 +114,7 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     {
         if (product == null) throw new ArgumentNullException(nameof(product));
         
-        _logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
+        Logger.LogInformation("Deleting product with ID {ProductId}", product.Id);
         _catalogContext.Products.Remove(product);
         
         return Task.CompletedTask;
@@ -122,7 +122,7 @@ public class CachedProductRepository : CachedSpecificationRepository<Product>, I
     
     public async Task InvalidateCacheAsync()
     {
-        _logger.LogInformation("Invalidating product cache after database changes");
+        Logger.LogInformation("Invalidating product cache after database changes");
         await InvalidateCacheAsync($"{_cacheKeyPrefix}*");
     }
 }
