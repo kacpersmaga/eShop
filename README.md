@@ -49,7 +49,7 @@ eShop/
    ```
 2. **Run in Development Mode**:
    ```bash
-   docker-compose up --build (uses docker-compose.yml + docker-compose.override.yml, disables Caddy)
+   docker-compose up --build
    ```
    - Backend API: `http://localhost:8080`
    - Frontend: `http://localhost:3000`
@@ -57,7 +57,7 @@ eShop/
    - Azurite Blob Storage: `http://localhost:10000`
 3. **Run in Production Mode**:
    ```bash
-   docker-compose -f docker-compose.yml up --build (ignores overrides, enables Caddy, runs HTTPS)
+   docker-compose -f docker-compose.yml up --build
    ```
    - Access via `https://kacpersmaga.pl` (or configure your domain in `Caddyfile`).
    - Backend API proxied at `/api/*`.
@@ -85,6 +85,14 @@ eShop/
 - **eshop**: Backend API service.
 - **frontend**: Next.js frontend service.
 - **caddy**: Reverse proxy for HTTPS and routing.
+
+## Screenshots
+Below are previews of the eShop application, showcasing key pages and their respective routes. Click each preview to view the full-size image.
+
+| Homepage (`/`) | Homepage (Scrolled) (`/`) | Products (`/products`) | Admin Panel (`/admin`) |
+|----------------|---------------------------|------------------------|-----------------------|
+| [![Homepage Preview](screenshots/homepage1_preview.png)](screenshots/homepage1.png) | [![Homepage Scrolled Preview](screenshots/homepage2_preview.png)](screenshots/homepage2.png) | [![Products Preview](screenshots/products_preview.png)](screenshots/products.png) | [![Admin Panel Preview](screenshots/admin_preview.png)](screenshots/admin.png) |
+| The main landing page of the eShop, accessible when you visit the site. | The homepage view after scrolling down, showing more content. | The products page, where users can browse, filter, and search for items. | The admin panel for managing products.
 
 ## Contributing
 Feel free to fork the repository, create a feature branch, and submit a pull request. All contributions are welcome!
