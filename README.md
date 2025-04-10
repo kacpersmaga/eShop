@@ -49,7 +49,7 @@ eShop/
    ```
 2. **Run in Development Mode**:
    ```bash
-   docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build
+   docker-compose up --build (uses docker-compose.yml + docker-compose.override.yml, disables Caddy)
    ```
    - Backend API: `http://localhost:8080`
    - Frontend: `http://localhost:3000`
@@ -57,7 +57,7 @@ eShop/
    - Azurite Blob Storage: `http://localhost:10000`
 3. **Run in Production Mode**:
    ```bash
-   docker-compose up --build
+   docker-compose -f docker-compose.yml up --build (ignores overrides, enables Caddy, runs HTTPS)
    ```
    - Access via `https://kacpersmaga.pl` (or configure your domain in `Caddyfile`).
    - Backend API proxied at `/api/*`.
