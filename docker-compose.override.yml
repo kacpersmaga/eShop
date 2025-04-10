@@ -1,0 +1,29 @@
+services:
+  eshop:
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      PUBLIC_BLOB_HOST: "http://localhost:10000"
+      FrontendOrigin: "http://localhost:3000"
+      ConnectionStrings__Redis: "redis:6379,password=SuperSilneHaslo123!"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=eshop;User Id=sa;Password=Password123!;TrustServerCertificate=True"
+      AzureBlobStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1"
+    volumes:
+      - ./backend:/src
+
+  frontend:
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: "http://localhost:8080/api"
+      NEXT_DISABLE_LIGHTNING_CSS: "true"
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+  caddy:
+    deploy:
+      replicas: 0

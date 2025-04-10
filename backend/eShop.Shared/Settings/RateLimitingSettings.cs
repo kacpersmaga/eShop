@@ -2,5 +2,5 @@
 
 public class RateLimitingSettings
 {
-    public int MaxRequestsPerMinute { get; set; } = 10;
+    public int MaxRequestsPerMinute { get; set; } = 30;
 }

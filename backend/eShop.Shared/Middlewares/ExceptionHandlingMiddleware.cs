@@ -37,7 +37,6 @@ public class ExceptionHandlingMiddleware
         var statusCode = HttpStatusCode.InternalServerError;
         string message = "An unexpected error occurred. Please try again later.";
         
-        // Check exception type by namespace pattern to avoid direct references
         var exceptionType = exception.GetType().FullName;
         
         if (exceptionType?.Contains(".Catalog.Domain.Exceptions.") == true)

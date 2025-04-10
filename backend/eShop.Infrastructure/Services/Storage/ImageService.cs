@@ -1,4 +1,3 @@
-using eShop.Modules.Catalog.Application.Services;
 using eShop.Shared.Abstractions.Interfaces.Storage;
 using eShop.Shared.Abstractions.Primitives;
 using Microsoft.Extensions.Caching.Distributed;
