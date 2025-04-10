@@ -87,27 +87,12 @@ eShop/
 - **caddy**: Reverse proxy for HTTPS and routing.
 
 ## Screenshots
-Below are previews of the eShop application, showcasing key pages and their respective routes:
+Below are previews of the eShop application, showcasing key pages and their respective routes. Click each preview to view the full-size image.
 
-| **Homepage** (`/`) | **Homepage Preview** (`/`) |
-|--------------------|-----------------------------|
-| ![Homepage](screenshots/homepage1.png) | ![Homepage Preview](screenshots/homepage1_preview.png) |
-| The main landing page of the eShop, accessible when you visit the site. | Preview of the homepage's top section with additional styling or theme. |
-
-| **Homepage (Scrolled)** (`/`) | **Homepage Scrolled Preview** (`/`) |
-|-------------------------------|-------------------------------------|
-| ![Homepage Scrolled](screenshots/homepage2.png) | ![Homepage Scrolled Preview](screenshots/homepage2_preview.png) |
-| The homepage view after scrolling down, showing more content. | Preview of the scrolled-down homepage section. |
-
-| **Products** (`/products`) | **Products Preview** (`/products`) |
-|----------------------------|-------------------------------------|
-| ![Products](screenshots/products.png) | ![Products Preview](screenshots/products_preview.png) |
-| The products page, where users can browse, filter, and search for items. | Preview of the products page with additional details or styling. |
-
-| **Admin Panel** (`/admin`) | **Admin Panel Preview** (`/admin`) |
-|----------------------------|-------------------------------------|
-| ![Admin Panel](screenshots/admin.png) | ![Admin Panel Preview](screenshots/admin_preview.png) |
-| The admin panel for managing products. | Preview of the admin panel interface. |
+| Homepage (`/`) | Homepage (Scrolled) (`/`) | Products (`/products`) | Admin Panel (`/admin`) |
+|----------------|---------------------------|------------------------|-----------------------|
+| [![Homepage Preview](screenshots/homepage1_preview.png)](screenshots/homepage1.png) | [![Homepage Scrolled Preview](screenshots/homepage2_preview.png)](screenshots/homepage2.png) | [![Products Preview](screenshots/products_preview.png)](screenshots/products.png) | [![Admin Panel Preview](screenshots/admin_preview.png)](screenshots/admin.png) |
+| The main landing page of the eShop, accessible when you visit the site. | The homepage view after scrolling down, showing more content. | The products page, where users can browse, filter, and search for items. | The admin panel for managing products.
 
 ## Contributing
 Feel free to fork the repository, create a feature branch, and submit a pull request. All contributions are welcome!
