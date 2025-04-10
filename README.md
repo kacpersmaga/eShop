@@ -91,7 +91,7 @@ Below are previews of the eShop application, showcasing key pages and their resp
 
 | Homepage (`/`) | Homepage (Scrolled) (`/`) | Products (`/products`) | Admin Panel (`/admin`) |
 |----------------|---------------------------|------------------------|-----------------------|
-| [![Homepage Preview](screenshots/homepage1_preview.png)](screenshots/homepage1.PNG) | [![Homepage Scrolled Preview](screenshots/homepage2_preview.png)](screenshots/homepage2.PNG) | [![Products Preview](screenshots/products_preview.png)](screenshots/products.PNG) | [![Admin Panel Preview](screenshots/admin_preview.png)](screenshots/admin.PNG) |
+| [![Homepage Preview](screenshots/homepage1_preview.png)](screenshots/homepage1.png) | [![Homepage Scrolled Preview](screenshots/homepage2_preview.png)](screenshots/homepage2.png) | [![Products Preview](screenshots/products_preview.png)](screenshots/products.png) | [![Admin Panel Preview](screenshots/admin_preview.png)](screenshots/admin.png) |
 | The main landing page of the eShop, accessible when you visit the site. | The homepage view after scrolling down, showing more content. | The products page, where users can browse, filter, and search for items. | The admin panel for managing products.
 
 ## Contributing
