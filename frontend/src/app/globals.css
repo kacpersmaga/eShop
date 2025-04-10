@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+@theme {
+  --radius: 0.625rem;
+  
+  /* Light theme colors - Neutral palette */
+  --color-background: oklch(1 0 0); /* Pure white */
+  --color-foreground: oklch(0.2 0 0); /* Dark gray, almost black */
+  
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.2 0 0);
+  
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.2 0 0);
+  
+  --color-primary: oklch(0.25 0 0); /* Dark gray for primary */
+  --color-primary-foreground: oklch(0.97 0 0); /* White text on primary */
+  
+  --color-secondary: oklch(0.95 0 0); /* Light gray */
+  --color-secondary-foreground: oklch(0.25 0 0);
+  
+  --color-muted: oklch(0.95 0 0);
+  --color-muted-foreground: oklch(0.55 0 0); /* Medium gray text */
+  
+  --color-accent: oklch(0.95 0 0);
+  --color-accent-foreground: oklch(0.25 0 0);
+  
+  --color-destructive: oklch(0.65 0.2 30); /* Keep red for destructive */
+  --color-destructive-foreground: oklch(0.97 0 0);
+  
+  --color-border: oklch(0.9 0 0); /* Light gray border */
+  --color-input: oklch(0.9 0 0);
+  --color-ring: oklch(0.2 0 0); /* Dark gray for focus rings */
+  
+  /* Animation utility values */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-geist-sans, sans-serif);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode - Black theme */
+.dark {
+  --color-background: oklch(0.1 0 0); /* True black */
+  --color-foreground: oklch(0.97 0 0); /* White */
+  
+  --color-card: oklch(0.15 0 0); /* Dark gray for cards */
+  --color-card-foreground: oklch(0.97 0 0);
+  
+  --color-popover: oklch(0.15 0 0);
+  --color-popover-foreground: oklch(0.97 0 0);
+  
+  --color-primary: oklch(0.97 0 0); /* White as primary */
+  --color-primary-foreground: oklch(0.1 0 0);
+  
+  --color-secondary: oklch(0.25 0 0); /* Dark gray */
+  --color-secondary-foreground: oklch(0.97 0 0);
+  
+  --color-muted: oklch(0.2 0 0);
+  --color-muted-foreground: oklch(0.7 0 0); /* Medium gray */
+  
+  --color-accent: oklch(0.25 0 0);
+  --color-accent-foreground: oklch(0.97 0 0);
+  
+  --color-destructive: oklch(0.5 0.15 30); /* Red tone */
+  --color-destructive-foreground: oklch(0.97 0 0);
+  
+  --color-border: oklch(0.25 0 0); /* Dark gray border */
+  --color-input: oklch(0.25 0 0);
+  --color-ring: oklch(0.7 0 0); /* Light gray for focus rings */
+}
+
+/* Focus states for accessibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  @apply ring-2 ring-ring ring-offset-2;
+}
+
+/* Container utility */
+.container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Responsive grid utility */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Animation utility */
+.transition-standard {
+  transition-property: all;
+  transition-timing-function: var(--ease-standard);
+  transition-duration: 300ms;
+}
+
+/* Hero section animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .bg-background {
+    background-color: var(--color-background);
+  }
+  
+  .text-foreground {
+    color: var(--color-foreground);
+  }
+  
+  .bg-card {
+    background-color: var(--color-card);
+  }
+  
+  .text-card-foreground {
+    color: var(--color-card-foreground);
+  }
+  
+  .bg-popover {
+    background-color: var(--color-popover);
+  }
+  
+  .text-popover-foreground {
+    color: var(--color-popover-foreground);
+  }
+  
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+  
+  .text-primary {
+    color: var(--color-primary);
+  }
+  
+  .text-primary-foreground {
+    color: var(--color-primary-foreground);
+  }
+  
+  .bg-secondary {
+    background-color: var(--color-secondary);
+  }
+  
+  .text-secondary {
+    color: var(--color-secondary);
+  }
+  
+  .text-secondary-foreground {
+    color: var(--color-secondary-foreground);
+  }
+  
+  .bg-muted {
+    background-color: var(--color-muted);
+  }
+  
+  .text-muted {
+    color: var(--color-muted);
+  }
+  
+  .text-muted-foreground {
+    color: var(--color-muted-foreground);
+  }
+  
+  .bg-accent {
+    background-color: var(--color-accent);
+  }
+  
+  .text-accent {
+    color: var(--color-accent);
+  }
+  
+  .text-accent-foreground {
+    color: var(--color-accent-foreground);
+  }
+  
+  .bg-destructive {
+    background-color: var(--color-destructive);
+  }
+  
+  .text-destructive {
+    color: var(--color-destructive);
+  }
+  
+  .text-destructive-foreground {
+    color: var(--color-destructive-foreground);
+  }
+  
+  .border-input {
+    border-color: var(--color-input);
+  }
+  
+  .border-border {
+    border-color: var(--color-border);
+  }
+  
+  .ring-ring {
+    --tw-ring-color: var(--color-ring);
+  }
+}

@@ -1,52 +1,59 @@
-# Ignore build output folders
-/eShop/bin/
-/eShop/obj/
+# Docker
+*.pid
 
-# Rider IDE specific files
-/.idea/
-/.idea_modules/
-/.idea.*/workspace.xml
-/.idea.*/tasks.xml
-/.idea.*/modules.xml
-/.idea.*/misc.xml
-/.idea.*/dataSources/
-/.idea.*/dataSources.ids
-/.idea.*/dataSources.xml
-/.idea.*/dataSources.local.xml
-/.idea.*/sqlDataSources.xml
-/.idea.*/dynamic.xml
-/.idea.*/libraries/
-/.idea.*/shelf/
-/.idea/httpRequests/
-/.idea/http-request-mappings.xml
-/.idea/assetWizard.xml
-/.idea/spellchecker.xml
-/.idea/vcs.xml
-/.idea/workspace.xml
-/.idea/.rider.local
-
-# Editor-specific files
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# Logs and debug files
+# Logs (shared/general)
 *.log
-*.tlog
+*.gz
+logs/
+log/
+*.tmp
+
+# Environment files
+.env
+.env.*
 
 # OS-specific files
 .DS_Store
 Thumbs.db
 ehthumbs.db
+Icon?
+__MACOSX/
 
-# NuGet Packages
-*.nupkg
-*.snupkg
-/packages/
-project.lock.json
-project.fragment.lock.json
-artifacts/
+# Editor and IDE configs
+.vscode/
+.idea/
 
-# ASP.NET temporary files
-*.vs/
+# Test output
+coverage/
+*.lcov
+
+# Debug / cache / misc
+.cache/
+.nyc_output/
+*.tsbuildinfo
+
+# Certificates / secrets
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*.orig
+
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# CI/CD artifacts
+.vercel/
+.netlify/
+.firebase/
+
+# Node build output
+dist/
+build/
+out/

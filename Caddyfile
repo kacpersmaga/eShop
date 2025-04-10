@@ -1,0 +1,14 @@
+kacpersmaga.pl {
+    encode gzip
+
+    reverse_proxy /api/* eshop:8080
+
+    route /storage/* {
+        uri strip_prefix /storage
+        reverse_proxy http://azurite:10000 {
+            header_up Host 127.0.0.1:10000
+        }
+    }
+
+    reverse_proxy frontend:3000
+}

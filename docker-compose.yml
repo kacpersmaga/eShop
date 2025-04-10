@@ -1,0 +1,98 @@
+﻿services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: eshop-db
+    environment:
+      SA_PASSWORD: "Password123!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "127.0.0.1:1433:1433"
+    networks:
+      - app-network
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: azurite-local
+    ports:
+      - "127.0.0.1:10000:10000"
+      - "127.0.0.1:10001:10001"
+      - "127.0.0.1:10002:10002"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: eshop-redis
+    command: ["redis-server", "--requirepass", "SuperSilneHaslo123!", "--protected-mode", "yes"]
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+
+  eshop:
+    build:
+      context: ./backend
+      dockerfile: eShop.Host/Dockerfile
+    container_name: eshop-app
+    expose:
+      - "8080"
+    depends_on:
+      - db
+      - azurite
+      - redis
+    networks:
+      - app-network
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db;Database=eshop;User Id=sa;Password=Password123!;TrustServerCertificate=True"
+      ConnectionStrings__Redis: "redis:6379,password=SuperSilneHaslo123!"
+      AzureBlobStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/"
+      PUBLIC_BLOB_HOST: "https://kacpersmaga.pl/storage"
+      FrontendOrigin: "https://kacpersmaga.pl"
+      CADDY_PROXY_IP: "192.168.144.7"
+      NEXT_PUBLIC_IMAGE_DOMAIN: "kacpersmaga.pl"
+    volumes:
+      - data-protection:/home/app/.aspnet/DataProtection-Keys
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: eshop-frontend
+    expose:
+      - "3000"
+    networks:
+      - app-network
+    depends_on:
+      - eshop
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "https://kacpersmaga.pl/api"
+
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+    networks:
+      - app-network
+    depends_on:
+      - frontend
+      - eshop
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mssql-data:
+  redis-data:
+  caddy-data:
+  data-protection:
