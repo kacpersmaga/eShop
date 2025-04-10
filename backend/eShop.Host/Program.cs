@@ -1,39 +1,26 @@
-using System.Net;
+using eShop.Host.Configuration;
 using eShop.Infrastructure.Configuration;
+using eShop.Infrastructure.Configuration.Cors;
 using eShop.Infrastructure.Configuration.Database;
+using eShop.Infrastructure.Configuration.Environment;
+using eShop.Infrastructure.Configuration.Logging;
 using eShop.Infrastructure.Configuration.Swagger;
 using eShop.Modules.Catalog;
-using eShop.Modules.Catalog.Api;
-using eShop.Shared.Configuration;
-using Microsoft.AspNetCore.HttpOverrides;
+using eShop.Shared.Helpers;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 try
 {
-    builder.ConfigureEnvironment<eShop.Host.Program>();
-    builder.Host.ConfigureSerilog();
-    
-    var caddyProxyIp = builder.Configuration["CADDY_PROXY_IP"];
+    builder.AddUserSecretsIfNeeded<eShop.Host.Program>();
+    builder.Host.AddSerilogLogging();
 
-    if (!string.IsNullOrWhiteSpace(caddyProxyIp) && IPAddress.TryParse(caddyProxyIp, out var proxyIp))
-    {
-        builder.Services.Configure<ForwardedHeadersOptions>(options =>
-        {
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
-            options.KnownProxies.Add(proxyIp);
-        });
-
-    }
-
-    builder.Services.AddControllers().AddApplicationPart(typeof(CatalogController).Assembly);
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddAuthorization();
-
-    builder.Services.AddSharedServices(builder.Configuration);
-    builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
-    builder.Services.AddCatalogModule(builder.Configuration);
+    builder.Services
+        .AddForwardedHeadersIfConfigured(builder.Configuration)
+        .AddHostConfiguration()
+        .AddInfrastructure(builder.Configuration, builder.Environment)
+        .AddCatalogModule(builder.Configuration);
 
     var app = builder.Build();
 
@@ -43,13 +30,10 @@ try
         app.ApplyDatabaseMigrations();
     }
 
-    
     app.UseForwardedHeaders();
-    
-    app.UseCorsPolicy(); 
+    app.UseCorsPolicy();
     app.UseSharedMiddlewares();
     app.UseSwaggerDocs(builder.Environment);
-
     app.MapControllers();
 
     app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);

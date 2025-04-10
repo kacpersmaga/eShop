@@ -1,5 +1,5 @@
 ﻿using eShop.Modules.Catalog.Infrastructure.Persistence;
-using eShop.Shared.Configuration;
+using eShop.Shared.Helpers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;

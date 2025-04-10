@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace eShop.Shared.Middlewares;
+namespace eShop.Infrastructure.Middlewares;
 
 public class CsrfProtectionMiddleware(RequestDelegate next,
     IAntiforgery antiforgery,

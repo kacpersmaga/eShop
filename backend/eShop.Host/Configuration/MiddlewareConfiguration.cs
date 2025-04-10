@@ -1,7 +1,6 @@
-﻿using eShop.Shared.Middlewares;
-using Microsoft.AspNetCore.Builder;
+﻿using eShop.Infrastructure.Middlewares;
 
-namespace eShop.Shared.Configuration;
+namespace eShop.Host.Configuration;
 
 public static class MiddlewareConfiguration
 {

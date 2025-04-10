@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace eShop.Shared.Configuration;
+namespace eShop.Shared.Helpers;
 
 public static class EnvironmentHelpers
 {

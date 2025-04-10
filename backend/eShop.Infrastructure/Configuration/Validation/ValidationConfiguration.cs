@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using eShop.Shared.Helpers;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace eShop.Shared.Configuration;
+namespace eShop.Infrastructure.Configuration.Validation;
 
-public static class ConfigurationValidation
+public static class ValidationConfiguration
 {
     public static IServiceCollection ValidateConfiguration(
         this IServiceCollection services, 

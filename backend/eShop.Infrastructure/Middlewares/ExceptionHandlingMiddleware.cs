@@ -4,7 +4,7 @@ using eShop.Shared.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace eShop.Shared.Middlewares;
+namespace eShop.Infrastructure.Middlewares;
 
 public class ExceptionHandlingMiddleware
 {

@@ -1,10 +1,12 @@
 ﻿using eShop.Infrastructure.Configuration.Caching;
+using eShop.Infrastructure.Configuration.Cors;
 using eShop.Infrastructure.Configuration.Database;
 using eShop.Infrastructure.Configuration.Events;
 using eShop.Infrastructure.Configuration.Repositories;
 using eShop.Infrastructure.Configuration.Storage;
 using eShop.Infrastructure.Configuration.Swagger;
-using eShop.Shared.Configuration;
+using eShop.Infrastructure.Configuration.Validation;
+using eShop.Shared.Helpers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,13 @@ public static class InfrastructureConfiguration
         services.AddStorageServices();
         services.AddEventDispatching();
         services.AddSwaggerDocs();
+        
+        services.AddCorsPolicy(configuration);
+        services.AddFluentValidation();
+        services.AddApiBehavior();
+        services.AddAntiforgeryPolicy(configuration);
+        services.AddAutoMapperSupport();
+        services.AddMemoryCaching();
 
         return services;
     }

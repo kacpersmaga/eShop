@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace eShop.Shared.Configuration;
+namespace eShop.Infrastructure.Configuration.Cors;
 
 public static class CorsConfiguration
 {
