@@ -5,13 +5,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'kacpersmaga.pl',
+        hostname: process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'kacpersmaga.pl',
         port: '',
         pathname: '/api/images/**',
       },
       {
         protocol: 'https',
-        hostname: 'kacpersmaga.pl',
+        hostname: process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'kacpersmaga.pl',
         port: '',
         pathname: '/storage/images/**',
       },
@@ -29,7 +29,6 @@ const nextConfig = {
     if (process.env.NODE_ENV === 'production') {
       return [];
     }
-
     return [
       {
         source: '/api/:path*',

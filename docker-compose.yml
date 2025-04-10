@@ -52,6 +52,7 @@
       PUBLIC_BLOB_HOST: "https://kacpersmaga.pl/storage"
       FrontendOrigin: "https://kacpersmaga.pl"
       CADDY_PROXY_IP: "192.168.144.7"
+      NEXT_PUBLIC_IMAGE_DOMAIN: "kacpersmaga.pl"
     volumes:
       - data-protection:/home/app/.aspnet/DataProtection-Keys
 
