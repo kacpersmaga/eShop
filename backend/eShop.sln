@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Infrastructure", "eSh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Modules.Catalog", "eShop.Modules.Catalog\eShop.Modules.Catalog.csproj", "{02DFDA20-2195-4323-9388-E8ACABEE7052}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eShop.Modules.Auth", "eShop.Modules.Auth\eShop.Modules.Auth.csproj", "{58018847-7002-4826-997E-62E70ABFA85D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02DFDA20-2195-4323-9388-E8ACABEE7052}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58018847-7002-4826-997E-62E70ABFA85D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58018847-7002-4826-997E-62E70ABFA85D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58018847-7002-4826-997E-62E70ABFA85D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58018847-7002-4826-997E-62E70ABFA85D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
